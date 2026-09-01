@@ -3,11 +3,13 @@
 namespace Database\Seeders;
 
 use App\Enums\ClientStatus;
+use App\Enums\ClientSurveyStatus;
 use App\Enums\CommunicationDirection;
 use App\Enums\CommunicationType;
 use App\Enums\LeadStatus;
 use App\Enums\OpportunityStage;
 use App\Enums\ReminderPriority;
+use App\Enums\UserRole;
 use App\Models\Client;
 use App\Models\ClientSurvey;
 use App\Models\Communication;
@@ -21,6 +23,8 @@ use App\Models\StatusHistory;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class CrmSeeder extends Seeder
 {
@@ -28,52 +32,68 @@ class CrmSeeder extends Seeder
 
     public function run(): void
     {
-        $admin = User::factory()->admin()->create([
+        $admin = User::create([
             'name' => 'Daniel Balisi',
             'email' => 'daniel@primepower.com',
-            'password' => 'password',
+            'password' => Hash::make('password'),
+            'role' => UserRole::ADMIN,
+            'email_verified_at' => now(),
         ]);
 
-        $maria = User::factory()->salesRep()->create([
+        $maria = User::create([
             'name' => 'Maria Santos',
             'email' => 'maria@primepower.com',
-            'password' => 'password',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'email_verified_at' => now(),
         ]);
 
-        $juan = User::factory()->salesRep()->create([
+        $juan = User::create([
             'name' => 'Juan Dela Cruz',
             'email' => 'juan@primepower.com',
-            'password' => 'password',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'email_verified_at' => now(),
         ]);
 
-        $carlos = User::factory()->salesRep()->create([
+        $carlos = User::create([
             'name' => 'Carlos Reyes',
             'email' => 'carlos@primepower.com',
-            'password' => 'password',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'email_verified_at' => now(),
         ]);
 
-        $anna = User::factory()->salesRep()->create([
+        $anna = User::create([
             'name' => 'Anna Lim',
             'email' => 'anna@primepower.com',
-            'password' => 'password',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'email_verified_at' => now(),
         ]);
 
-        $miguel = User::factory()->salesRep()->create([
+        $miguel = User::create([
             'name' => 'Miguel Garcia',
             'email' => 'miguel@primepower.com',
-            'password' => 'password',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'email_verified_at' => now(),
         ]);
 
-        $sofia = User::factory()->salesRep()->create([
+        $sofia = User::create([
             'name' => 'Sofia Mendoza',
             'email' => 'sofia@primepower.com',
-            'password' => 'password',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'email_verified_at' => now(),
         ]);
 
-        User::factory()->manager()->create([
+        $manager = User::create([
             'name' => 'Ana Reyes',
             'email' => 'ana@primepower.com',
-            'password' => 'password',
+            'password' => Hash::make('password'),
+            'role' => UserRole::MANAGER,
+            'email_verified_at' => now(),
         ]);
 
         $salesReps = [$maria, $juan, $carlos, $anna, $miguel, $sofia];
@@ -136,16 +156,71 @@ class CrmSeeder extends Seeder
             'Marine Crew Staffing', 'Security Personnel Deployment',
         ];
 
+        $stages = [
+            OpportunityStage::INITIAL_CONTACT,
+            OpportunityStage::DISCUSSION,
+            OpportunityStage::PROPOSAL,
+            OpportunityStage::NEGOTIATION,
+            OpportunityStage::CONTRACT_PROCESSING,
+            OpportunityStage::WON,
+            OpportunityStage::LOST,
+            OpportunityStage::INITIAL_CONTACT,
+            OpportunityStage::DISCUSSION,
+            OpportunityStage::PROPOSAL,
+            OpportunityStage::NEGOTIATION,
+            OpportunityStage::CONTRACT_PROCESSING,
+            OpportunityStage::WON,
+            OpportunityStage::LOST,
+            OpportunityStage::INITIAL_CONTACT,
+            OpportunityStage::DISCUSSION,
+            OpportunityStage::PROPOSAL,
+            OpportunityStage::NEGOTIATION,
+            OpportunityStage::CONTRACT_PROCESSING,
+            OpportunityStage::LOST,
+        ];
+
+        $leadStatuses = [
+            LeadStatus::NEW,
+            LeadStatus::QUALIFIED,
+            LeadStatus::QUALIFIED,
+            LeadStatus::QUALIFIED,
+            LeadStatus::QUALIFIED,
+            LeadStatus::CONVERTED,
+            LeadStatus::DISQUALIFIED,
+            LeadStatus::NEW,
+            LeadStatus::QUALIFIED,
+            LeadStatus::QUALIFIED,
+            LeadStatus::QUALIFIED,
+            LeadStatus::QUALIFIED,
+            LeadStatus::CONVERTED,
+            LeadStatus::DISQUALIFIED,
+            LeadStatus::NEW,
+            LeadStatus::QUALIFIED,
+            LeadStatus::QUALIFIED,
+            LeadStatus::QUALIFIED,
+            LeadStatus::QUALIFIED,
+            LeadStatus::DISQUALIFIED,
+        ];
+
         $companyModels = [];
         $leadModels = [];
         $clientModels = [];
 
-        for ($i = 0; $i < count($companies); $i++) {
-            $company = Company::create($companies[$i]);
+        foreach ($companies as $i => $companyData) {
+            $company = Company::create($companyData);
+
+            $contactFirst = $contacts[$i];
+            $emailDomain = explode('@', $companyData['email'])[1];
+            $phoneSuffix = '917 '.(100 + $i).' '.(1000 + $i * 7);
 
             $primaryContact = Contact::create(array_merge(
-                $contacts[$i],
-                ['company_id' => $company->id, 'is_primary' => true, 'email' => strtolower(str_replace(' ', '.', $contacts[$i]['first_name'] . '.' . $contacts[$i]['last_name'])) . '@' . explode('@', $companies[$i]['email'])[1], 'phone' => '+63 ' . rand(917, 999) . ' ' . rand(100, 999) . ' ' . rand(1000, 9999)]
+                $contactFirst,
+                [
+                    'company_id' => $company->id,
+                    'is_primary' => true,
+                    'email' => strtolower(str_replace(' ', '.', $contactFirst['first_name'].'.'.$contactFirst['last_name'])).'@'.$emailDomain,
+                    'phone' => '+63 '.$phoneSuffix,
+                ]
             ));
 
             Contact::create([
@@ -153,30 +228,18 @@ class CrmSeeder extends Seeder
                 'first_name' => 'Secondary',
                 'last_name' => 'Contact',
                 'title' => 'Assistant',
-                'email' => 'secondary@' . explode('@', $companies[$i]['email'])[1],
-                'phone' => '+63 ' . rand(917, 999) . ' ' . rand(100, 999) . ' ' . rand(1000, 9999),
+                'email' => 'secondary@'.$emailDomain,
+                'phone' => '+63 918 '.(100 + $i).' '.(1000 + $i * 13),
                 'is_primary' => false,
             ]);
 
-            $assignedTo = $salesReps[array_rand($salesReps)];
-            $source = $sources[array_rand($sources)];
-            $monthsAgo = rand(0, 5);
-            $leadDate = now()->subMonths($monthsAgo)->subDays(rand(0, 27));
+            $assignedTo = $salesReps[$i % count($salesReps)];
+            $source = $sources[$i % count($sources)];
+            $stage = $stages[$i];
+            $status = $leadStatuses[$i];
 
-            $opportunityStages = [
-                OpportunityStage::INITIAL_CONTACT, OpportunityStage::DISCUSSION,
-                OpportunityStage::PROPOSAL, OpportunityStage::NEGOTIATION,
-                OpportunityStage::CONTRACT_PROCESSING, OpportunityStage::WON,
-                OpportunityStage::LOST,
-            ];
-            $stage = $opportunityStages[array_rand($opportunityStages)];
-
-            $status = match ($stage) {
-                OpportunityStage::WON => LeadStatus::CONVERTED,
-                OpportunityStage::LOST => LeadStatus::DISQUALIFIED,
-                OpportunityStage::CONTRACT_PROCESSING, OpportunityStage::NEGOTIATION => LeadStatus::QUALIFIED,
-                default => rand(0, 1) ? LeadStatus::NEW : LeadStatus::QUALIFIED,
-            };
+            $leadDate = now()->subDays(60 - $i * 2);
+            $oppDate = now()->subDays(50 - $i * 2);
 
             $lead = Lead::create([
                 'company_id' => $company->id,
@@ -190,7 +253,7 @@ class CrmSeeder extends Seeder
             $companyModels[] = $company;
             $leadModels[] = $lead;
 
-            $this->createStatusHistories($lead, $assignedTo->id, $status, $source);
+            $this->createStatusHistories($lead, $assignedTo->id, $status, $source, $leadDate);
 
             $client = null;
             if ($status === LeadStatus::CONVERTED) {
@@ -198,8 +261,8 @@ class CrmSeeder extends Seeder
                     'company_id' => $company->id,
                     'lead_id' => $lead->id,
                     'assigned_to_id' => $assignedTo->id,
-                    'status' => rand(0, 1) ? ClientStatus::ACTIVE : ClientStatus::INACTIVE,
-                    'client_since' => now()->subMonths(rand(1, 12))->toDateString(),
+                    'status' => ClientStatus::ACTIVE,
+                    'client_since' => now()->subMonths(1 + $i)->toDateString(),
                     'notes' => 'Converted from lead after successful opportunity win.',
                 ]);
                 $clientModels[] = $client;
@@ -207,86 +270,86 @@ class CrmSeeder extends Seeder
                 $this->createSurveys($client);
             }
 
-            $oppDate = now()->subMonths($monthsAgo)->subDays(rand(0, 27));
-
             $opportunity = Opportunity::create([
                 'company_id' => $company->id,
                 'lead_id' => $lead->id,
                 'client_id' => $client?->id,
                 'assigned_to_id' => $assignedTo->id,
                 'title' => $opportunityTitles[$i],
-                'description' => 'Manpower services for ' . strtolower($company->industry) . ' operations.',
+                'description' => 'Manpower services for '.strtolower($companyData['industry']).' operations.',
                 'stage' => $stage,
-                'manpower_requirement' => rand(10, 100),
-                'estimated_contract_value' => rand(30, 500) * 1000,
-                'expected_close_date' => now()->subMonths(rand(-3, 6))->toDateString(),
+                'manpower_requirement' => 10 + $i * 4,
+                'estimated_contract_value' => (300 + $i * 50) * 1000,
+                'expected_close_date' => now()->subMonths(-1 + $i)->toDateString(),
                 'lost_reason' => $stage === OpportunityStage::LOST ? 'Lost to competitor pricing.' : null,
                 'created_at' => $oppDate,
-                'updated_at' => $stage === OpportunityStage::WON ? $oppDate : now(),
+                'updated_at' => in_array($stage, [OpportunityStage::WON, OpportunityStage::LOST]) ? $oppDate : now(),
             ]);
 
-            $this->createStageHistoriesForOpportunity($opportunity, $assignedTo->id, $stage);
+            $this->createStageHistoriesForOpportunity($opportunity, $assignedTo->id, $stage, $oppDate);
         }
 
-        for ($i = 0; $i < count($companyModels); $i++) {
-            $company = $companyModels[$i];
+        foreach ($companyModels as $i => $company) {
             $lead = $leadModels[$i];
             $assignedTo = $lead->assignedTo;
-            $numComms = rand(2, 5);
 
-            for ($j = 0; $j < $numComms; $j++) {
-                $type = CommunicationType::cases()[array_rand(CommunicationType::cases())];
-                $direction = CommunicationDirection::cases()[array_rand(CommunicationDirection::cases())];
+            $commTypes = [CommunicationType::EMAIL, CommunicationType::PHONE, CommunicationType::MEETING];
+            $commDirections = [CommunicationDirection::OUTGOING, CommunicationDirection::INCOMING, CommunicationDirection::OUTGOING];
+            $commSubjects = ['Follow-up on proposal', 'Schedule meeting', 'Send updated quote'];
+            $commDays = [30, 20, 10];
 
+            foreach ($commTypes as $j => $type) {
                 Communication::create([
                     'company_id' => $company->id,
                     'lead_id' => $lead->id,
                     'user_id' => $assignedTo->id,
                     'contact_id' => $company->contacts->first()?->id,
                     'type' => $type,
-                    'direction' => $direction,
-                    'subject' => "Follow-up on {$opportunityTitles[$i]}",
+                    'direction' => $commDirections[$j],
+                    'subject' => $commSubjects[$j],
                     'notes' => 'Discussion about requirements and next steps.',
-                    'duration_minutes' => $type === CommunicationType::EMAIL || $type === CommunicationType::TEXT ? null : rand(15, 90),
-                    'scheduled_at' => rand(0, 1) ? now()->subDays(rand(1, 30)) : null,
-                    'created_at' => now()->subDays(rand(1, 60)),
+                    'duration_minutes' => $type === CommunicationType::EMAIL || $type === CommunicationType::TEXT ? null : 30 + $j * 20,
+                    'scheduled_at' => now()->subDays($commDays[$j]),
+                    'created_at' => now()->subDays($commDays[$j] + 5),
                 ]);
             }
 
-            $numReminders = rand(1, 4);
-            for ($j = 0; $j < $numReminders; $j++) {
-                $isCompleted = rand(0, 1);
+            $reminderTitles = ['Follow up on proposal', 'Schedule meeting'];
+            $reminderPriorities = [ReminderPriority::HIGH, ReminderPriority::MEDIUM];
+            $reminderDays = [14, 7];
+
+            foreach ($reminderTitles as $j => $title) {
                 Reminder::create([
                     'company_id' => $company->id,
                     'related_to_type' => 'lead',
                     'related_to_id' => $lead->id,
-                    'title' => ['Follow up on proposal', 'Schedule meeting', 'Send updated quote', 'Confirm requirements'][$j % 4],
-                    'description' => 'Action required for ' . $company->name,
-                    'due_date' => now()->subDays(rand(-7, 14)),
-                    'priority' => ReminderPriority::cases()[array_rand(ReminderPriority::cases())],
-                    'is_completed' => $isCompleted,
-                    'completed_at' => $isCompleted ? now()->subDays(rand(1, 10)) : null,
+                    'title' => $title,
+                    'description' => 'Action required for '.$company->name,
+                    'due_date' => now()->addDays($reminderDays[$j]),
+                    'priority' => $reminderPriorities[$j],
+                    'is_completed' => $j === 0,
+                    'completed_at' => $j === 0 ? now()->subDays(2) : null,
                     'assigned_to_name' => $assignedTo->name,
-                    'created_at' => now()->subDays(rand(5, 20)),
+                    'created_at' => now()->subDays(20 + $j * 5),
                 ]);
             }
         }
     }
 
-    private function createStatusHistories(Lead $lead, int $userId, LeadStatus $finalStatus, string $source): void
+    private function createStatusHistories(Lead $lead, int $userId, LeadStatus $finalStatus, string $source, \DateTimeInterface $leadDate): void
     {
-        $histories = [[LeadStatus::NEW, "Initial contact via {$source}.", now()->subDays(rand(30, 60))]];
+        $histories = [[LeadStatus::NEW, "Initial contact via {$source}.", $leadDate]];
 
         if (in_array($finalStatus, [LeadStatus::QUALIFIED, LeadStatus::CONVERTED])) {
-            $histories[] = [LeadStatus::QUALIFIED, 'Requirements confirmed. Budget approved.', now()->subDays(rand(15, 29))];
+            $histories[] = [LeadStatus::QUALIFIED, 'Requirements confirmed. Budget approved.', now()->subDays(15)];
         }
 
         if ($finalStatus === LeadStatus::CONVERTED) {
-            $histories[] = [LeadStatus::CONVERTED, 'Contract signed. Converted to client.', now()->subDays(rand(1, 14))];
+            $histories[] = [LeadStatus::CONVERTED, 'Contract signed. Converted to client.', now()->subDays(7)];
         }
 
         if ($finalStatus === LeadStatus::DISQUALIFIED) {
-            $histories[] = [LeadStatus::DISQUALIFIED, 'No budget or timeline mismatch.', now()->subDays(rand(10, 20))];
+            $histories[] = [LeadStatus::DISQUALIFIED, 'No budget or timeline mismatch.', now()->subDays(10)];
         }
 
         $previousStatus = null;
@@ -303,7 +366,7 @@ class CrmSeeder extends Seeder
         }
     }
 
-    private function createStageHistoriesForOpportunity(Opportunity $opportunity, int $userId, OpportunityStage $finalStage): void
+    private function createStageHistoriesForOpportunity(Opportunity $opportunity, int $userId, OpportunityStage $finalStage, \DateTimeInterface $oppDate): void
     {
         $allStages = [
             OpportunityStage::INITIAL_CONTACT,
@@ -340,36 +403,26 @@ class CrmSeeder extends Seeder
                 'from_stage' => $previousStage,
                 'to_stage' => $stage->value,
                 'reason' => $reason,
-                'created_at' => now()->subDays($daysAgo),
+                'created_at' => $oppDate->copy()->subDays($daysAgo),
             ]);
 
             $previousStage = $stage->value;
-            $daysAgo = max(1, $daysAgo - rand(8, 12));
+            $daysAgo = max(1, $daysAgo - 10);
         }
     }
 
     private function createSurveys(Client $client): void
     {
-        $numSurveys = rand(1, 3);
-        $scores = [];
+        $surveyScores = [4, 5, 3, 4, 5];
+        $avgScore = round(array_sum($surveyScores) / count($surveyScores), 1);
 
-        for ($i = 0; $i < $numSurveys; $i++) {
-            $isCompleted = rand(0, 1) || $i === 0;
-            $surveyScores = [rand(3, 5), rand(3, 5), rand(2, 5), rand(3, 5), rand(4, 5)];
-            $avgScore = $isCompleted ? round(array_sum($surveyScores) / count($surveyScores), 1) : null;
-
-            ClientSurvey::create([
-                'client_id' => $client->id,
-                'token' => 'srv_' . str()->random(10),
-                'status' => $isCompleted ? 'completed' : (rand(0, 1) ? 'pending' : 'expired'),
-                'responses' => $isCompleted ? array_map(fn($score, $idx) => ['question_id' => 'q' . ($idx + 1), 'score' => $score], $surveyScores, array_keys($surveyScores)) : null,
-                'average_score' => $avgScore,
-                'completed_at' => $isCompleted ? now()->subDays(rand(5, 60)) : null,
-            ]);
-
-            if ($avgScore !== null) {
-                $scores[] = $avgScore;
-            }
-        }
+        ClientSurvey::create([
+            'client_id' => $client->id,
+            'token' => 'srv_'.Str::random(10),
+            'status' => ClientSurveyStatus::COMPLETED,
+            'responses' => array_map(fn ($score, $idx) => ['question_id' => 'q'.($idx + 1), 'score' => $score], $surveyScores, array_keys($surveyScores)),
+            'average_score' => $avgScore,
+            'completed_at' => now()->subDays(10),
+        ]);
     }
 }
