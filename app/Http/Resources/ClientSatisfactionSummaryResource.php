@@ -56,6 +56,7 @@ class ClientSatisfactionSummaryResource extends JsonResource
         } elseif ($latest < $previous) {
             return 'down';
         }
+
         return 'stable';
     }
 }

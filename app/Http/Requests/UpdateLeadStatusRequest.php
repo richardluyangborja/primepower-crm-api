@@ -29,10 +29,6 @@ class UpdateLeadStatusRequest extends FormRequest
                     $currentStatus = $lead->status;
                     $targetStatus = LeadStatus::from($value);
 
-                    if ($targetStatus === LeadStatus::CONVERTED) {
-                        $fail('Cannot set status to CONVERTED through this endpoint. Use the opportunity win workflow instead.');
-                    }
-
                     if (! in_array($targetStatus, $currentStatus->validTransitions(), true)) {
                         $fail('Invalid status transition.');
                     }

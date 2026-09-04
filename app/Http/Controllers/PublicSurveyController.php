@@ -12,7 +12,7 @@ class PublicSurveyController extends Controller
     {
         $survey = ClientSurvey::with('client.company')->where('token', $token)->first();
 
-        if (!$survey) {
+        if (! $survey) {
             abort(404, 'Survey not found');
         }
 
@@ -36,7 +36,7 @@ class PublicSurveyController extends Controller
     {
         $survey = ClientSurvey::where('token', $token)->first();
 
-        if (!$survey) {
+        if (! $survey) {
             abort(404, 'Survey not found');
         }
 

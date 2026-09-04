@@ -11,6 +11,8 @@ class ContactController extends Controller
 {
     public function store(StoreContactRequest $request): JsonResponse
     {
+        $this->authorize('create', Contact::class);
+
         $contact = Contact::create($request->validated());
 
         $contact->load('company');
@@ -50,6 +52,8 @@ class ContactController extends Controller
 
     public function update(Contact $contact): JsonResponse
     {
+        $this->authorize('update', $contact);
+
         Contact::where('company_id', $contact->company_id)
             ->update(['is_primary' => false]);
 
@@ -89,6 +93,8 @@ class ContactController extends Controller
 
     public function destroy(Contact $contact): JsonResponse
     {
+        $this->authorize('delete', $contact);
+
         $contactName = "{$contact->first_name} {$contact->last_name}";
         $companyName = $contact->company?->name;
 

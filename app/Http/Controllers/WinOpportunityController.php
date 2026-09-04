@@ -12,6 +12,8 @@ class WinOpportunityController extends Controller
 {
     public function win(WinOpportunityRequest $request, Opportunity $opportunity, WinOpportunity $winOpportunity)
     {
+        $this->authorize('win', $opportunity);
+
         $reason = $request->validated()['reason'] ?? null;
 
         $result = $winOpportunity->handle($opportunity, $reason);

@@ -20,6 +20,7 @@ use App\Models\Opportunity;
 use App\Models\Reminder;
 use App\Models\StageHistory;
 use App\Models\StatusHistory;
+use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -37,54 +38,7 @@ class CrmSeeder extends Seeder
             'email' => 'daniel@primepower.com',
             'password' => Hash::make('password'),
             'role' => UserRole::ADMIN,
-            'email_verified_at' => now(),
-        ]);
-
-        $maria = User::create([
-            'name' => 'Maria Santos',
-            'email' => 'maria@primepower.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::SALES_REP,
-            'email_verified_at' => now(),
-        ]);
-
-        $juan = User::create([
-            'name' => 'Juan Dela Cruz',
-            'email' => 'juan@primepower.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::SALES_REP,
-            'email_verified_at' => now(),
-        ]);
-
-        $carlos = User::create([
-            'name' => 'Carlos Reyes',
-            'email' => 'carlos@primepower.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::SALES_REP,
-            'email_verified_at' => now(),
-        ]);
-
-        $anna = User::create([
-            'name' => 'Anna Lim',
-            'email' => 'anna@primepower.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::SALES_REP,
-            'email_verified_at' => now(),
-        ]);
-
-        $miguel = User::create([
-            'name' => 'Miguel Garcia',
-            'email' => 'miguel@primepower.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::SALES_REP,
-            'email_verified_at' => now(),
-        ]);
-
-        $sofia = User::create([
-            'name' => 'Sofia Mendoza',
-            'email' => 'sofia@primepower.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::SALES_REP,
+            'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
@@ -93,10 +47,93 @@ class CrmSeeder extends Seeder
             'email' => 'ana@primepower.com',
             'password' => Hash::make('password'),
             'role' => UserRole::MANAGER,
+            'is_active' => true,
+            'email_verified_at' => now(),
+        ]);
+
+        $maria = User::create([
+            'name' => 'Maria Santos',
+            'email' => 'maria@primepower.com',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'is_active' => true,
+            'email_verified_at' => now(),
+        ]);
+
+        $juan = User::create([
+            'name' => 'Juan Dela Cruz',
+            'email' => 'juan@primepower.com',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'is_active' => true,
+            'email_verified_at' => now(),
+        ]);
+
+        $carlos = User::create([
+            'name' => 'Carlos Reyes',
+            'email' => 'carlos@primepower.com',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'is_active' => true,
+            'email_verified_at' => now(),
+        ]);
+
+        $anna = User::create([
+            'name' => 'Anna Lim',
+            'email' => 'anna@primepower.com',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'is_active' => true,
+            'email_verified_at' => now(),
+        ]);
+
+        $miguel = User::create([
+            'name' => 'Miguel Garcia',
+            'email' => 'miguel@primepower.com',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'is_active' => true,
+            'email_verified_at' => now(),
+        ]);
+
+        $sofia = User::create([
+            'name' => 'Sofia Mendoza',
+            'email' => 'sofia@primepower.com',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SALES_REP,
+            'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
         $salesReps = [$maria, $juan, $carlos, $anna, $miguel, $sofia];
+
+        $enterprise = Team::create([
+            'name' => 'Enterprise Sales',
+            'description' => 'Strategic accounts and key client relationships.',
+            'manager_id' => $manager->id,
+        ]);
+
+        $smb = Team::create([
+            'name' => 'SMB Sales',
+            'description' => 'Small and mid-market business accounts.',
+            'manager_id' => $manager->id,
+        ]);
+
+        $manager->update(['team_id' => $enterprise->id]);
+
+        foreach ([$maria, $juan, $carlos] as $rep) {
+            $rep->update([
+                'manager_id' => $manager->id,
+                'team_id' => $enterprise->id,
+            ]);
+        }
+
+        foreach ([$anna, $miguel, $sofia] as $rep) {
+            $rep->update([
+                'manager_id' => $manager->id,
+                'team_id' => $smb->id,
+            ]);
+        }
 
         $companies = [
             ['name' => 'ABC Manufacturing Corporation', 'industry' => 'Manufacturing', 'address' => 'Quezon City, Metro Manila', 'phone' => '+63 981 235 4500', 'email' => 'info@abcmanufacturing.example', 'website' => 'https://abcmanufacturing.example'],
@@ -327,9 +364,11 @@ class CrmSeeder extends Seeder
                     'description' => 'Action required for '.$company->name,
                     'due_date' => now()->addDays($reminderDays[$j]),
                     'priority' => $reminderPriorities[$j],
-                    'is_completed' => $j === 0,
-                    'completed_at' => $j === 0 ? now()->subDays(2) : null,
+                    'status' => 'pending',
+                    'is_completed' => false,
+                    'completed_at' => null,
                     'assigned_to_name' => $assignedTo->name,
+                    'user_id' => $assignedTo->id,
                     'created_at' => now()->subDays(20 + $j * 5),
                 ]);
             }

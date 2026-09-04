@@ -3,11 +3,15 @@
 namespace App\Models;
 
 use App\Enums\CommunicationDirection;
+use App\Enums\CommunicationOutcome;
 use App\Enums\CommunicationType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Communication extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'company_id',
         'lead_id',
@@ -16,6 +20,7 @@ class Communication extends Model
         'user_id',
         'type',
         'direction',
+        'outcome',
         'subject',
         'notes',
         'duration_minutes',
@@ -25,6 +30,7 @@ class Communication extends Model
     protected $casts = [
         'type' => CommunicationType::class,
         'direction' => CommunicationDirection::class,
+        'outcome' => CommunicationOutcome::class,
         'scheduled_at' => 'datetime',
     ];
 

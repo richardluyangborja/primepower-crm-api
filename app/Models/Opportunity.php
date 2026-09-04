@@ -56,4 +56,24 @@ class Opportunity extends Model
     {
         return $this->morphMany(Reminder::class, 'related_to');
     }
+
+    public function getRecentActivityAttribute(): ?string
+    {
+        $latestReminder = $this->reminders()->latest('updated_at')->first();
+        $latestStage = $this->stageHistories()->latest('created_at')->first();
+
+        $candidates = array_filter([
+            $latestReminder?->updated_at,
+            $latestStage?->created_at,
+            $this->updated_at,
+        ]);
+
+        if (empty($candidates)) {
+            return null;
+        }
+
+        $latest = collect($candidates)->max();
+
+        return $latest instanceof \DateTimeInterface ? $latest->format(\DateTimeInterface::ATOM) : (string) $latest;
+    }
 }

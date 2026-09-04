@@ -11,6 +11,7 @@ use App\Http\Resources\OpportunityResource;
 use App\Models\AuditLog;
 use App\Models\Opportunity;
 use App\Models\StageHistory;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,13 +19,27 @@ class OpportunityController extends Controller
 {
     public function index(Request $request)
     {
-        $opportunities = Opportunity::query()
-            ->with([
-                'company',
-                'assignedTo',
-            ])
+        $this->authorize('viewAny', Opportunity::class);
+
+        $user = $request->user();
+        $opportunities = $this->scopeVisibleTo($user, Opportunity::query())
+            ->with(['company', 'assignedTo'])
+            ->when($request->filled('stage'), fn ($q) => $q->where('stage', $request->string('stage')))
+            ->when($request->filled('assigned_to_id'), fn ($q) => $q->where('assigned_to_id', $request->integer('assigned_to_id')))
+            ->when($request->filled('value_min'), fn ($q) => $q->where('estimated_contract_value', '>=', $request->integer('value_min')))
+            ->when($request->filled('value_max'), fn ($q) => $q->where('estimated_contract_value', '<=', $request->integer('value_max')))
+            ->when($request->filled('expected_close_from'), fn ($q) => $q->whereDate('expected_close_date', '>=', $request->date('expected_close_from')))
+            ->when($request->filled('expected_close_to'), fn ($q) => $q->whereDate('expected_close_date', '<=', $request->date('expected_close_to')))
+            ->when($request->filled('q'), function ($q) use ($request) {
+                $term = '%'.$request->string('q').'%';
+                $q->where(function ($q) use ($term) {
+                    $q->where('title', 'like', $term)
+                        ->orWhereHas('company', fn ($c) => $c->where('name', 'like', $term));
+                });
+            })
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         return OpportunityResource::collection($opportunities);
     }
@@ -49,6 +64,8 @@ class OpportunityController extends Controller
         StoreOpportunityRequest $request,
         CreateOpportunity $createOpportunity
     ) {
+        $this->authorize('create', Opportunity::class);
+
         $opportunity = $createOpportunity->handle(
             $request->validated()
         );
@@ -86,10 +103,13 @@ class OpportunityController extends Controller
 
     public function show(Opportunity $opportunity)
     {
+        $this->authorize('view', $opportunity);
+
         $opportunity->load([
             'company.contacts',
             'lead.company',
             'assignedTo',
+            'assignedTo.team',
             'stageHistories.user',
             'reminders.company',
             'reminders.relatedTo',
@@ -102,6 +122,8 @@ class OpportunityController extends Controller
         UpdateOpportunityRequest $request,
         Opportunity $opportunity
     ) {
+        $this->authorize('update', $opportunity);
+
         $original = $opportunity->only(array_keys($request->validated()));
         $opportunity->update($request->validated());
 
@@ -128,6 +150,7 @@ class OpportunityController extends Controller
             'company.contacts',
             'lead.company',
             'assignedTo',
+            'assignedTo.team',
             'stageHistories.user',
             'reminders.company',
             'reminders.relatedTo',
@@ -140,6 +163,8 @@ class OpportunityController extends Controller
         UpdateOpportunityStageRequest $request,
         Opportunity $opportunity
     ) {
+        $this->authorize('updateStage', $opportunity);
+
         $validated = $request->validated();
 
         $fromStage = $opportunity->stage->value;
@@ -176,11 +201,23 @@ class OpportunityController extends Controller
             'company.contacts',
             'lead.company',
             'assignedTo',
+            'assignedTo.team',
             'stageHistories.user',
             'reminders.company',
             'reminders.relatedTo',
         ]);
 
         return new OpportunityDetailsResource($opportunity);
+    }
+
+    private function scopeVisibleTo(User $user, $query)
+    {
+        if ($user->isAdmin()) {
+            return $query;
+        }
+
+        $ids = $user->visibleUserIds();
+
+        return $query->whereIn('assigned_to_id', $ids);
     }
 }

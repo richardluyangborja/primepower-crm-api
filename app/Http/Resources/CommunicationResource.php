@@ -30,6 +30,10 @@ class CommunicationResource extends JsonResource
 
             'direction' => $this->direction,
 
+            'outcome' => $this->outcome?->value,
+
+            'outcome_label' => $this->outcome?->label(),
+
             'subject' => $this->subject,
 
             'notes' => $this->notes,

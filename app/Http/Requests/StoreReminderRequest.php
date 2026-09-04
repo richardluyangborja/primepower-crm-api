@@ -21,11 +21,12 @@ class StoreReminderRequest extends FormRequest
             'related_to_id' => ['required', 'integer'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'due_date' => ['required', 'date'],
+            'due_date' => ['required', 'date', 'after_or_equal:today'],
             'priority' => ['required', Rule::enum(ReminderPriority::class)],
             'is_completed' => ['sometimes', 'boolean'],
             'completed_at' => ['nullable', 'date'],
             'assigned_to_name' => ['nullable', 'string', 'max:255'],
+            'recurrence_rule' => ['nullable', 'string', Rule::in(['daily', 'weekly', 'monthly'])],
         ];
     }
 }

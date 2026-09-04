@@ -51,6 +51,7 @@ class CompanyResource extends JsonResource
                         'name' => $this->leads->first()->assignedTo->name,
                     ];
                 }
+
                 return null;
             }),
         ];

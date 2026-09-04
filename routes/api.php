@@ -7,11 +7,15 @@ use App\Http\Controllers\CommunicationController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\PublicSurveyController;
 use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\SalesRepresentativeController;
+use App\Http\Controllers\TeamController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WinOpportunityController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->except(['destroy']);
 
     Route::patch('leads/{lead}/status', [LeadController::class, 'updateStatus']);
+    Route::patch('leads/{lead}/reassign', [LeadController::class, 'reassign']);
 
     Route::get(
         'sales-representatives',
@@ -45,9 +50,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('clients/mine', [ClientController::class, 'mine']);
 
     Route::apiResource('clients', ClientController::class)
-        ->only(['index', 'show']);
+        ->only(['index', 'show', 'update']);
 
     Route::patch('clients/{client}/status', [ClientController::class, 'updateStatus']);
+    Route::patch('clients/{client}/reassign', [ClientController::class, 'reassign']);
 
     Route::get('opportunities/mine', [OpportunityController::class, 'mine']);
 
@@ -61,14 +67,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('communications/mine', [CommunicationController::class, 'mine']);
 
     Route::apiResource('communications', CommunicationController::class)
-        ->only(['index', 'show', 'store']);
+        ->only(['index', 'show', 'store', 'update', 'destroy']);
 
     Route::get('reminders/mine', [ReminderController::class, 'mine']);
+    Route::get('reminders/team', [ReminderController::class, 'team']);
 
     Route::apiResource('reminders', ReminderController::class)
-        ->only(['index', 'show', 'store', 'update']);
+        ->only(['index', 'show', 'store', 'update', 'destroy']);
 
+    Route::patch('reminders/{reminder}/complete', [ReminderController::class, 'complete']);
     Route::patch('reminders/{reminder}/incomplete', [ReminderController::class, 'markIncomplete']);
+    Route::patch('reminders/{reminder}/snooze', [ReminderController::class, 'snooze']);
 
     Route::get('satisfaction', [ClientSatisfactionController::class, 'index']);
     Route::get('satisfaction/mine', [ClientSatisfactionController::class, 'mine']);
@@ -80,8 +89,29 @@ Route::middleware('auth:sanctum')->group(function () {
         ->only(['store', 'update', 'destroy']);
 
     Route::get('audit-logs', [AuditLogController::class, 'index']);
+    Route::get('audit-logs/export', [AuditLogController::class, 'export']);
+
+    Route::apiResource('users', UserController::class)
+        ->except(['create', 'edit']);
+    Route::post('users/{user}/deactivate', [UserController::class, 'deactivate']);
+    Route::post('users/{user}/activate', [UserController::class, 'activate']);
+    Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword']);
+    Route::get('users-export', [UserController::class, 'export']);
+
+    Route::apiResource('teams', TeamController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
+    Route::get('teams/{team}/members', [TeamController::class, 'members']);
+
+    Route::apiResource('escalation-rules', EscalationRuleController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('dashboard', [DashboardController::class, 'index']);
+
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
+    Route::patch('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
 });
 
 Route::get('surveys/{token}', [PublicSurveyController::class, 'show']);

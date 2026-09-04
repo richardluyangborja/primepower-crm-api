@@ -3,20 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\DashboardResource;
-use App\Models\Client;
-use App\Models\Communication;
-use App\Models\Lead;
-use App\Models\Opportunity;
-use App\Models\Reminder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        abort_if($request->user() === null, 401);
+
         return response()->json([
-            'data' => new DashboardResource([]),
+            'data' => new DashboardResource($request),
         ]);
     }
 }

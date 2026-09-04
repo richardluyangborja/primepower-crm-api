@@ -15,9 +15,11 @@ enum LeadStatus: string
             self::NEW => [
                 self::QUALIFIED,
                 self::DISQUALIFIED,
+                self::CONVERTED,
             ],
             self::QUALIFIED => [
                 self::DISQUALIFIED,
+                self::CONVERTED,
             ],
             self::DISQUALIFIED => [
                 self::QUALIFIED,

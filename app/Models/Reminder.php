@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\ReminderPriority;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Reminder extends Model
@@ -21,6 +23,8 @@ class Reminder extends Model
         'completed_at',
         'assigned_to_name',
         'user_id',
+        'recurrence_rule',
+        'recurrence_parent_id',
     ];
 
     protected $casts = [
@@ -41,8 +45,18 @@ class Reminder extends Model
         return $this->morphTo();
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'recurrence_parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'recurrence_parent_id');
     }
 }

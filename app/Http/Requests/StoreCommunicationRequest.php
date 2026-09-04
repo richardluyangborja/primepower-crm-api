@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\CommunicationDirection;
+use App\Enums\CommunicationOutcome;
 use App\Enums\CommunicationType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,6 +30,18 @@ class StoreCommunicationRequest extends FormRequest
                 'exists:contacts,id',
             ],
 
+            'lead_id' => [
+                'nullable',
+                'integer',
+                'exists:leads,id',
+            ],
+
+            'client_id' => [
+                'nullable',
+                'integer',
+                'exists:clients,id',
+            ],
+
             'type' => [
                 'required',
                 Rule::enum(CommunicationType::class),
@@ -37,6 +50,11 @@ class StoreCommunicationRequest extends FormRequest
             'direction' => [
                 'required',
                 Rule::enum(CommunicationDirection::class),
+            ],
+
+            'outcome' => [
+                'nullable',
+                Rule::enum(CommunicationOutcome::class),
             ],
 
             'subject' => [

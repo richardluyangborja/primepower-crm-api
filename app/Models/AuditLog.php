@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
  * @property array<string, mixed>|null $metadata
  */
 #[Fillable([
+    'actor_id',
     'actor_name',
     'actor_email',
     'actor_role',
@@ -41,7 +42,7 @@ class AuditLog extends Model
     /**
      * Build the actor attributes from the currently authenticated user.
      *
-     * @return array{actor_name: string|null, actor_email: string|null, actor_role: string|null}
+     * @return array{actor_id: int|null, actor_name: string|null, actor_email: string|null, actor_role: string|null}
      */
     public static function actor(): array
     {
@@ -49,6 +50,7 @@ class AuditLog extends Model
 
         if (! $user) {
             return [
+                'actor_id' => null,
                 'actor_name' => 'System',
                 'actor_email' => null,
                 'actor_role' => null,
@@ -60,6 +62,7 @@ class AuditLog extends Model
             : (string) $user->role;
 
         return [
+            'actor_id' => $user->id,
             'actor_name' => $user->name,
             'actor_email' => $user->email,
             'actor_role' => $role,

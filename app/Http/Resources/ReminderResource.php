@@ -68,9 +68,16 @@ class ReminderResource extends JsonResource
                     'id' => 0,
                     'name' => $this->assigned_to_name,
                 ]
-                : null,
+                : $this->whenLoaded('user', fn () => $this->user ? [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                ] : null),
+
+            'recurrence_rule' => $this->recurrence_rule,
+            'recurrence_parent_id' => $this->recurrence_parent_id,
 
             'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

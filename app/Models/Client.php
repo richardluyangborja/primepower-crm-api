@@ -61,4 +61,26 @@ class Client extends Model
     {
         return $this->hasMany(ClientSurvey::class);
     }
+
+    public function getRecentActivityAttribute(): ?string
+    {
+        $latestCommunication = $this->company?->communications()->latest('created_at')->first();
+        $latestReminder = $this->reminders()->latest('updated_at')->first();
+        $latestSurvey = $this->surveys()->latest('created_at')->first();
+
+        $candidates = array_filter([
+            $latestCommunication?->created_at,
+            $latestReminder?->updated_at,
+            $latestSurvey?->created_at,
+            $this->updated_at,
+        ]);
+
+        if (empty($candidates)) {
+            return null;
+        }
+
+        $latest = collect($candidates)->max();
+
+        return $latest instanceof \DateTimeInterface ? $latest->format(\DateTimeInterface::ATOM) : (string) $latest;
+    }
 }
