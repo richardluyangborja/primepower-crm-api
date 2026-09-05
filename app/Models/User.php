@@ -18,7 +18,6 @@ use Illuminate\Support\Collection;
     'email',
     'password',
     'role',
-    'team_id',
     'manager_id',
     'is_active',
 ])]
@@ -51,11 +50,6 @@ class User extends Authenticatable
     public function opportunities()
     {
         return $this->hasMany(Opportunity::class, 'assigned_to_id');
-    }
-
-    public function team(): BelongsTo
-    {
-        return $this->belongsTo(Team::class);
     }
 
     public function manager(): BelongsTo

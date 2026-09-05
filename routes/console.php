@@ -12,6 +12,6 @@ Schedule::command('reminders:send-due --days=1')
     ->dailyAt('08:00')
     ->withoutOverlapping();
 
-Schedule::command('escalations:evaluate')
-    ->dailyAt('06:00')
+Schedule::command('satisfaction:thresholds')
+    ->dailyAt('05:00')
     ->withoutOverlapping();

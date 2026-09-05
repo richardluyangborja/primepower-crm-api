@@ -100,7 +100,7 @@ class LeadController extends Controller
             'company.contacts',
             'opportunities.assignedTo',
             'assignedTo',
-            'assignedTo.team',
+
             'statusHistories.user',
             'communications.company',
             'communications.contact',
@@ -141,7 +141,7 @@ class LeadController extends Controller
         $lead->load([
             'company.contacts',
             'assignedTo',
-            'assignedTo.team',
+
             'statusHistories.user',
         ]);
 
@@ -258,7 +258,7 @@ class LeadController extends Controller
             'company.contacts',
             'opportunities.assignedTo',
             'assignedTo',
-            'assignedTo.team',
+
             'statusHistories.user',
             'communications.company',
             'communications.contact',
@@ -301,7 +301,7 @@ class LeadController extends Controller
             ],
         ]);
 
-        $lead->load(['company.contacts', 'assignedTo', 'assignedTo.team']);
+        $lead->load(['company.contacts', 'assignedTo']);
 
         return new LeadResource($lead);
     }

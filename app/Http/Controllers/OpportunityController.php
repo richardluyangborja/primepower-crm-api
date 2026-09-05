@@ -109,7 +109,7 @@ class OpportunityController extends Controller
             'company.contacts',
             'lead.company',
             'assignedTo',
-            'assignedTo.team',
+
             'stageHistories.user',
             'reminders.company',
             'reminders.relatedTo',
@@ -150,7 +150,7 @@ class OpportunityController extends Controller
             'company.contacts',
             'lead.company',
             'assignedTo',
-            'assignedTo.team',
+
             'stageHistories.user',
             'reminders.company',
             'reminders.relatedTo',
@@ -201,7 +201,7 @@ class OpportunityController extends Controller
             'company.contacts',
             'lead.company',
             'assignedTo',
-            'assignedTo.team',
+
             'stageHistories.user',
             'reminders.company',
             'reminders.relatedTo',

@@ -38,6 +38,8 @@ class ClientSatisfactionSummaryResource extends JsonResource
             'last_survey_date' => $completedSurveys->max('completed_at'),
             'average_score' => $averageScore,
             'trend' => $trend,
+            'at_risk' => (bool) $this->at_risk,
+            'at_risk_reason' => $this->at_risk_reason,
         ];
     }
 

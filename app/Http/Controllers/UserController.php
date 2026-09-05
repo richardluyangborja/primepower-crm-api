@@ -22,14 +22,10 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $query = User::query()->with(['team', 'manager'])->latest();
+        $query = User::query()->with(['manager'])->latest();
 
         if ($request->filled('role')) {
             $query->where('role', $request->string('role'));
-        }
-
-        if ($request->filled('team_id')) {
-            $query->where('team_id', $request->integer('team_id'));
         }
 
         if ($request->filled('is_active')) {
@@ -58,7 +54,7 @@ class UserController extends Controller
 
         $user = DB::transaction(function () use ($data) {
             $user = User::create($data);
-            $user->load(['team', 'manager']);
+            $user->load(['manager']);
 
             AuditLog::log([
                 ...AuditLog::actor(),
@@ -71,7 +67,6 @@ class UserController extends Controller
                 'metadata' => [
                     'email' => $user->email,
                     'role' => $user->role->value,
-                    'team_id' => $user->team_id,
                     'manager_id' => $user->manager_id,
                 ],
             ]);
@@ -89,7 +84,7 @@ class UserController extends Controller
     {
         $this->authorize('view', $user);
 
-        $user->load(['team', 'manager']);
+        $user->load(['manager']);
 
         return new UserResource($user);
     }
@@ -109,7 +104,7 @@ class UserController extends Controller
 
         $previousRole = $user->role;
         $user->update($data);
-        $user->load(['team', 'manager']);
+        $user->load(['manager']);
 
         $changes = [];
         foreach ($original as $key => $oldValue) {
@@ -195,7 +190,7 @@ class UserController extends Controller
             'metadata' => ['email' => $user->email],
         ]);
 
-        return response()->json(['data' => (new UserResource($user->fresh(['team', 'manager'])))->resolve()]);
+        return response()->json(['data' => (new UserResource($user->fresh(['manager'])))->resolve()]);
     }
 
     public function activate(User $user): JsonResponse
@@ -215,7 +210,7 @@ class UserController extends Controller
             'metadata' => ['email' => $user->email],
         ]);
 
-        return response()->json(['data' => (new UserResource($user->fresh(['team', 'manager'])))->resolve()]);
+        return response()->json(['data' => (new UserResource($user->fresh(['manager'])))->resolve()]);
     }
 
     public function resetPassword(ResetUserPasswordRequest $request, User $user): JsonResponse
@@ -252,9 +247,9 @@ class UserController extends Controller
     {
         $this->authorize('export', User::class);
 
-        $query = User::query()->with(['team', 'manager'])->latest();
+        $query = User::query()->with(['manager'])->latest();
 
-        foreach (['role', 'team_id'] as $field) {
+        foreach (['role'] as $field) {
             if ($request->filled($field)) {
                 $query->where($field, $request->input($field));
             }
@@ -272,7 +267,7 @@ class UserController extends Controller
             'subject_id' => null,
             'subject_name' => 'CSV export',
             'description' => 'User CSV export requested.',
-            'metadata' => $request->only(['role', 'team_id', 'is_active']),
+            'metadata' => $request->only(['role', 'is_active']),
         ]);
 
         $fileName = 'users-'.now()->format('Ymd-His').'.csv';
@@ -280,7 +275,7 @@ class UserController extends Controller
         return response()->streamDownload(function () use ($query) {
             $out = fopen('php://output', 'w');
             fputcsv($out, [
-                'id', 'name', 'email', 'role', 'team', 'manager', 'is_active', 'created_at',
+                'id', 'name', 'email', 'role', 'manager', 'is_active', 'created_at',
             ]);
 
             $query->lazy()->each(function (User $user) use ($out) {
@@ -289,7 +284,6 @@ class UserController extends Controller
                     $user->name,
                     $user->email,
                     $user->role instanceof UserRole ? $user->role->value : (string) $user->role,
-                    $user->team?->name,
                     $user->manager?->name,
                     $user->is_active ? 'yes' : 'no',
                     $user->created_at?->toDateTimeString(),

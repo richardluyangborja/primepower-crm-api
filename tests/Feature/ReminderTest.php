@@ -5,7 +5,6 @@ use App\Enums\UserRole;
 use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\Reminder;
-use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -13,18 +12,14 @@ uses(RefreshDatabase::class);
 
 function seedReminderActor(array $overrides = []): array
 {
-    $team = Team::create(['name' => 'Team '.uniqid(), 'slug' => 'team-'.uniqid()]);
-
     $manager = User::factory()->create(array_merge([
         'role' => UserRole::MANAGER,
         'email' => 'mgr-reminder-'.uniqid().'@example.com',
-        'team_id' => $team->id,
     ], $overrides['manager'] ?? []));
 
     $rep = User::factory()->create([
         'role' => UserRole::SALES_REP,
         'email' => 'rep-reminder-'.uniqid().'@example.com',
-        'team_id' => $team->id,
         'manager_id' => $manager->id,
     ]);
 
@@ -41,7 +36,7 @@ function seedReminderActor(array $overrides = []): array
         'email' => 'remco+'.uniqid().'@example.com',
     ]);
 
-    return [$manager, $rep, $other, $company, $team];
+    return [$manager, $rep, $other, $company];
 }
 
 function makeReminder(User $user, Company $company, array $overrides = []): Reminder
@@ -150,26 +145,6 @@ it('lets a manager snooze a team members reminder', function () {
     $this->actingAs($manager)->patchJson("/api/reminders/{$reminder->id}/snooze", [
         'due_date' => now()->addDays(2)->toDateString(),
     ])->assertOk();
-});
-
-it('returns only team reminders on the team feed for managers', function () {
-    [$manager, $rep, $other, $company] = seedReminderActor();
-    $myReminder = makeReminder($rep, $company);
-    $otherReminder = makeReminder($other, $company);
-
-    $response = $this->actingAs($manager)->getJson('/api/reminders/team');
-
-    $response->assertOk();
-    $ids = collect($response->json('data'))->pluck('id');
-    expect($ids)->toContain($myReminder->id);
-    expect($ids)->not->toContain($otherReminder->id);
-});
-
-it('blocks sales reps from accessing the team feed', function () {
-    [$manager, $rep, $other, $company] = seedReminderActor();
-
-    $this->actingAs($rep)->getJson('/api/reminders/team')
-        ->assertForbidden();
 });
 
 it('lets a manager delete a team reminder and logs the action', function () {

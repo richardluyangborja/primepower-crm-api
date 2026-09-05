@@ -4,13 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\ClientSurveyResource;
 use App\Models\ClientSurvey;
+use App\Models\SurveyTemplate;
 use Illuminate\Http\Request;
 
 class PublicSurveyController extends Controller
 {
+    private const DEFAULT_QUESTIONS = [
+        ['id' => 'q1', 'text' => 'How satisfied are you with our communication?', 'category' => 'Communication'],
+        ['id' => 'q2', 'text' => 'How would you rate the quality of our deliverables?', 'category' => 'Quality'],
+        ['id' => 'q3', 'text' => 'How satisfied are you with our timeliness?', 'category' => 'Timeliness'],
+        ['id' => 'q4', 'text' => 'How likely are you to recommend our services?', 'category' => 'Loyalty'],
+        ['id' => 'q5', 'text' => 'How satisfied are you with our responsiveness?', 'category' => 'Support'],
+    ];
+
     public function show(string $token)
     {
-        $survey = ClientSurvey::with('client.company')->where('token', $token)->first();
+        $survey = ClientSurvey::with(['client.company', 'templateVersion'])->where('token', $token)->first();
 
         if (! $survey) {
             abort(404, 'Survey not found');
@@ -20,6 +29,8 @@ class PublicSurveyController extends Controller
             abort(410, 'Survey has expired');
         }
 
+        $questions = $survey->templateVersion?->questions ?? $this->defaultQuestions();
+
         return response()->json([
             'data' => [
                 'token' => $survey->token,
@@ -28,8 +39,18 @@ class PublicSurveyController extends Controller
                     'name' => $survey->client->company->name,
                     'industry' => $survey->client->company->industry,
                 ],
+                'questions' => $questions,
             ],
         ]);
+    }
+
+    private function defaultQuestions(): array
+    {
+        // Fall back to the "Default" template's current questions if one exists,
+        // otherwise the built-in five.
+        $default = SurveyTemplate::where('name', 'Default')->first();
+
+        return $default?->currentVersion?->questions ?? self::DEFAULT_QUESTIONS;
     }
 
     public function submit(Request $request, string $token)

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\ClientStatus;
 use App\Enums\ClientSurveyStatus;
 use App\Enums\CommunicationDirection;
+use App\Enums\CommunicationOutcome;
 use App\Enums\CommunicationType;
 use App\Enums\LeadStatus;
 use App\Enums\OpportunityStage;
@@ -20,7 +21,6 @@ use App\Models\Opportunity;
 use App\Models\Reminder;
 use App\Models\StageHistory;
 use App\Models\StatusHistory;
-use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -107,33 +107,7 @@ class CrmSeeder extends Seeder
 
         $salesReps = [$maria, $juan, $carlos, $anna, $miguel, $sofia];
 
-        $enterprise = Team::create([
-            'name' => 'Enterprise Sales',
-            'description' => 'Strategic accounts and key client relationships.',
-            'manager_id' => $manager->id,
-        ]);
-
-        $smb = Team::create([
-            'name' => 'SMB Sales',
-            'description' => 'Small and mid-market business accounts.',
-            'manager_id' => $manager->id,
-        ]);
-
-        $manager->update(['team_id' => $enterprise->id]);
-
-        foreach ([$maria, $juan, $carlos] as $rep) {
-            $rep->update([
-                'manager_id' => $manager->id,
-                'team_id' => $enterprise->id,
-            ]);
-        }
-
-        foreach ([$anna, $miguel, $sofia] as $rep) {
-            $rep->update([
-                'manager_id' => $manager->id,
-                'team_id' => $smb->id,
-            ]);
-        }
+        $manager->update(['manager_id' => null]);
 
         $companies = [
             ['name' => 'ABC Manufacturing Corporation', 'industry' => 'Manufacturing', 'address' => 'Quezon City, Metro Manila', 'phone' => '+63 981 235 4500', 'email' => 'info@abcmanufacturing.example', 'website' => 'https://abcmanufacturing.example'],
@@ -334,6 +308,7 @@ class CrmSeeder extends Seeder
             $commDirections = [CommunicationDirection::OUTGOING, CommunicationDirection::INCOMING, CommunicationDirection::OUTGOING];
             $commSubjects = ['Follow-up on proposal', 'Schedule meeting', 'Send updated quote'];
             $commDays = [30, 20, 10];
+            $commOutcomes = [CommunicationOutcome::INTERESTED, CommunicationOutcome::MEETING_BOOKED, CommunicationOutcome::NO_RESPONSE];
 
             foreach ($commTypes as $j => $type) {
                 Communication::create([
@@ -345,6 +320,7 @@ class CrmSeeder extends Seeder
                     'direction' => $commDirections[$j],
                     'subject' => $commSubjects[$j],
                     'notes' => 'Discussion about requirements and next steps.',
+                    'outcome' => $commOutcomes[$j]->value,
                     'duration_minutes' => $type === CommunicationType::EMAIL || $type === CommunicationType::TEXT ? null : 30 + $j * 20,
                     'scheduled_at' => now()->subDays($commDays[$j]),
                     'created_at' => now()->subDays($commDays[$j] + 5),
@@ -354,6 +330,7 @@ class CrmSeeder extends Seeder
             $reminderTitles = ['Follow up on proposal', 'Schedule meeting'];
             $reminderPriorities = [ReminderPriority::HIGH, ReminderPriority::MEDIUM];
             $reminderDays = [14, 7];
+            $recurrenceRules = ['weekly', null];
 
             foreach ($reminderTitles as $j => $title) {
                 Reminder::create([
@@ -369,9 +346,31 @@ class CrmSeeder extends Seeder
                     'completed_at' => null,
                     'assigned_to_name' => $assignedTo->name,
                     'user_id' => $assignedTo->id,
+                    'recurrence_rule' => $recurrenceRules[$j],
+                    'recurrence_parent_id' => null,
                     'created_at' => now()->subDays(20 + $j * 5),
                 ]);
             }
+
+            $dueReminder = Reminder::create([
+                'company_id' => $company->id,
+                'related_to_type' => 'lead',
+                'related_to_id' => $lead->id,
+                'title' => 'Urgent follow-up',
+                'description' => 'Overdue action for '.$company->name,
+                'due_date' => now()->subDay(),
+                'priority' => ReminderPriority::HIGH,
+                'status' => 'pending',
+                'is_completed' => false,
+                'completed_at' => null,
+                'assigned_to_name' => $assignedTo->name,
+                'user_id' => $assignedTo->id,
+                'recurrence_rule' => null,
+                'recurrence_parent_id' => null,
+                'created_at' => now()->subDays(5),
+            ]);
+
+            $assignedTo->notify(new \App\Notifications\ReminderDueNotification($dueReminder));
         }
     }
 

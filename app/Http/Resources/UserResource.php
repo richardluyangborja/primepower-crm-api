@@ -14,11 +14,6 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'role' => $this->role instanceof \BackedEnum ? $this->role->value : $this->role,
-            'team' => $this->whenLoaded('team', fn () => $this->team ? [
-                'id' => $this->team->id,
-                'name' => $this->team->name,
-            ] : null),
-            'team_id' => $this->team_id,
             'manager' => $this->whenLoaded('manager', fn () => $this->manager ? [
                 'id' => $this->manager->id,
                 'name' => $this->manager->name,

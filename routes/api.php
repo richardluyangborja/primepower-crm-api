@@ -7,14 +7,14 @@ use App\Http\Controllers\CommunicationController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\PublicSurveyController;
 use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\SalesRepresentativeController;
-use App\Http\Controllers\TeamController;
+use App\Http\Controllers\SatisfactionReportController;
+use App\Http\Controllers\SurveyTemplateController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WinOpportunityController;
 use Illuminate\Http\Request;
@@ -70,7 +70,6 @@ Route::middleware('auth:sanctum')->group(function () {
         ->only(['index', 'show', 'store', 'update', 'destroy']);
 
     Route::get('reminders/mine', [ReminderController::class, 'mine']);
-    Route::get('reminders/team', [ReminderController::class, 'team']);
 
     Route::apiResource('reminders', ReminderController::class)
         ->only(['index', 'show', 'store', 'update', 'destroy']);
@@ -81,8 +80,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('satisfaction', [ClientSatisfactionController::class, 'index']);
     Route::get('satisfaction/mine', [ClientSatisfactionController::class, 'mine']);
+    // Report routes must precede satisfaction/{client} so {client} never binds "report".
+    Route::get('satisfaction/report', [SatisfactionReportController::class, 'index']);
+    Route::get('satisfaction/report/export', [SatisfactionReportController::class, 'export']);
     Route::get('satisfaction/{client}', [ClientSatisfactionController::class, 'show']);
     Route::post('satisfaction/{client}/surveys', [ClientSatisfactionController::class, 'store']);
+    Route::post('satisfaction/{client}/surveys/manual', [ClientSatisfactionController::class, 'storeManual']);
     Route::delete('satisfaction/{client}/surveys/{survey}', [ClientSatisfactionController::class, 'destroy']);
 
     Route::apiResource('contacts', ContactController::class)
@@ -98,11 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword']);
     Route::get('users-export', [UserController::class, 'export']);
 
-    Route::apiResource('teams', TeamController::class)
-        ->only(['index', 'store', 'update', 'destroy']);
-    Route::get('teams/{team}/members', [TeamController::class, 'members']);
-
-    Route::apiResource('escalation-rules', EscalationRuleController::class)
+    Route::apiResource('survey-templates', SurveyTemplateController::class)
         ->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('dashboard', [DashboardController::class, 'index']);

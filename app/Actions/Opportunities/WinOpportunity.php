@@ -70,7 +70,7 @@ class WinOpportunity
                 ]);
 
                 StatusHistory::create([
-                    'lead_id' => $lead->lead_id,
+                    'lead_id' => $lead->id,
                     'user_id' => Auth::id(),
                     'from_status' => $fromStatus,
                     'to_status' => LeadStatus::CONVERTED->value,

@@ -35,6 +35,8 @@ class ClientSatisfactionDetailResource extends JsonResource
             'completed_surveys' => $completedSurveys->count(),
             'pending_surveys' => $surveys->where('status', 'pending')->count(),
             'average_score' => $averageScore,
+            'at_risk' => (bool) $this->at_risk,
+            'at_risk_reason' => $this->at_risk_reason,
             'surveys' => ClientSurveyResource::collection($surveys),
         ];
     }

@@ -62,7 +62,7 @@ class ClientController extends Controller
             'company.contacts',
             'company.opportunities.assignedTo',
             'assignedTo',
-            'assignedTo.team',
+
             'lead',
             'communications.company',
             'communications.contact',
@@ -146,7 +146,7 @@ class ClientController extends Controller
             'company.contacts',
             'company.opportunities.assignedTo',
             'assignedTo',
-            'assignedTo.team',
+
             'lead',
             'communications.company',
             'communications.contact',

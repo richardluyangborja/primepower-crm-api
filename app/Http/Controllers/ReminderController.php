@@ -57,26 +57,6 @@ class ReminderController extends Controller
         return ReminderResource::collection($reminders);
     }
 
-    public function team(Request $request)
-    {
-        $this->authorize('viewAny', Reminder::class);
-        $user = $request->user();
-
-        if (! $user->isManager() && ! $user->isAdmin()) {
-            abort(403, 'Only managers and admins may view the team reminders feed.');
-        }
-
-        $teamUserIds = $user->visibleUserIds();
-        $reminders = Reminder::query()
-            ->whereIn('user_id', $teamUserIds)
-            ->with(['company', 'relatedTo', 'user'])
-            ->where('is_completed', false)
-            ->orderBy('due_date')
-            ->paginate(15);
-
-        return ReminderResource::collection($reminders);
-    }
-
     public function store(StoreReminderRequest $request)
     {
         $this->authorize('create', Reminder::class);

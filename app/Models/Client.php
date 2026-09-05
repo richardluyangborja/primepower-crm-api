@@ -14,11 +14,14 @@ class Client extends Model
         'status',
         'client_since',
         'notes',
+        'at_risk',
+        'at_risk_reason',
     ];
 
     protected $casts = [
         'status' => ClientStatus::class,
         'client_since' => 'date',
+        'at_risk' => 'boolean',
     ];
 
     public function company()

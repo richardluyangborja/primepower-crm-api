@@ -9,6 +9,7 @@ class ClientSurvey extends Model
 {
     protected $fillable = [
         'client_id',
+        'template_version_id',
         'token',
         'status',
         'responses',
@@ -29,6 +30,11 @@ class ClientSurvey extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function templateVersion()
+    {
+        return $this->belongsTo(SurveyTemplateVersion::class, 'template_version_id');
     }
 
     public function calculateAverageScore(): ?float
