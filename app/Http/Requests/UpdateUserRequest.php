@@ -28,7 +28,6 @@ class UpdateUserRequest extends FormRequest
             ],
             'password' => ['sometimes', 'nullable', Password::min(8)],
             'role' => ['sometimes', Rule::enum(UserRole::class)],
-            'manager_id' => ['sometimes', 'nullable', 'integer', 'exists:users,id'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

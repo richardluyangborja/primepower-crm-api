@@ -10,6 +10,7 @@ use App\Http\Resources\ClientResource;
 use App\Models\AuditLog;
 use App\Models\Client;
 use App\Models\ClientStatusHistory;
+use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -194,6 +195,64 @@ class ClientController extends Controller
         $client->load(['company.contacts', 'assignedTo', 'assignedTo.team', 'surveys']);
 
         return new ClientResource($client);
+    }
+
+    public function destroy(Client $client)
+    {
+        $this->authorize('delete', $client);
+
+        $company = $client->company;
+
+        $blocker = null;
+        if ($client->opportunities()->exists()) {
+            $blocker = 'opportunities';
+        } elseif ($client->surveys()->exists()) {
+            $blocker = 'surveys';
+        } elseif ($client->reminders()->exists()) {
+            $blocker = 'reminders';
+        } elseif ($client->statusHistories()->exists()) {
+            $blocker = 'status history';
+        } elseif ($company && $company->communications()->exists()) {
+            $blocker = 'communications';
+        }
+
+        if ($blocker) {
+            return response()->json([
+                'message' => "This client cannot be deleted because it has {$blocker}.",
+            ], 409);
+        }
+
+        $companyName = $company?->name ?? "Client #{$client->id}";
+
+        AuditLog::log([
+            ...AuditLog::actor(),
+            'module' => 'Client',
+            'action' => 'Deleted',
+            'subject_type' => 'Client',
+            'subject_id' => (string) $client->id,
+            'subject_name' => $companyName,
+            'description' => "Client '{$companyName}' was deleted.",
+            'metadata' => [
+                'company_id' => $company?->id,
+                'company_name' => $companyName,
+                'assigned_to' => $client->assignedTo?->name,
+                'status' => $client->status,
+            ],
+        ]);
+
+        $client->delete();
+
+        $companyStillReferenced = $company
+            && Company::query()
+                ->where('id', $company->id)
+                ->where(fn ($q) => $q->whereHas('leads')->orWhereHas('client')->orWhereHas('opportunities'))
+                ->exists();
+
+        if ($company && ! $companyStillReferenced) {
+            $company->delete();
+        }
+
+        return response()->noContent();
     }
 
     private function scopeVisibleTo(User $user, $query)

@@ -19,12 +19,12 @@ class OpportunityPolicy extends BasePolicy
 
     public function create(User $user): bool
     {
-        return $this->canManage($user) || $user->isSalesRep();
+        return $this->isAdmin($user) || $user->isSalesRep();
     }
 
     public function update(User $user, Opportunity $opportunity): bool
     {
-        if ($this->canManage($user)) {
+        if ($this->isAdmin($user)) {
             return true;
         }
 

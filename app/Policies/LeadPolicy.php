@@ -19,12 +19,12 @@ class LeadPolicy extends BasePolicy
 
     public function create(User $user): bool
     {
-        return $this->canManage($user) || $user->isSalesRep();
+        return $this->isAdmin($user) || $user->isSalesRep();
     }
 
     public function update(User $user, Lead $lead): bool
     {
-        if ($this->canManage($user)) {
+        if ($this->isAdmin($user)) {
             return true;
         }
 
@@ -43,6 +43,10 @@ class LeadPolicy extends BasePolicy
 
     public function delete(User $user, Lead $lead): bool
     {
-        return $this->canManage($user);
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        return $user->isSalesRep() && $lead->assigned_to_id === $user->id;
     }
 }

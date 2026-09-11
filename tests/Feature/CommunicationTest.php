@@ -103,9 +103,9 @@ it('blocks the author from editing after the grace period', function () {
     expect($comm->fresh()->subject)->toBe('Original');
 });
 
-it('lets a manager bypass the grace period', function () {
-    $manager = User::factory()->create(['role' => UserRole::MANAGER, 'email' => 'mgr-grace@example.com']);
-    $rep = User::factory()->create(['role' => UserRole::SALES_REP, 'email' => 'rep-mgrbypass@example.com']);
+it('blocks a manager from editing a team members communication', function () {
+    $manager = User::factory()->create(['role' => UserRole::MANAGER, 'email' => 'mgr-grace-'.uniqid().'@example.com']);
+    $rep = User::factory()->create(['role' => UserRole::SALES_REP, 'email' => 'rep-mgrbypass-'.uniqid().'@example.com']);
     [$company, $contact] = makeCompanyAndContact();
 
     $comm = new Communication([
@@ -123,8 +123,8 @@ it('lets a manager bypass the grace period', function () {
         'subject' => 'Manager fix',
     ]);
 
-    $response->assertOk();
-    expect($comm->fresh()->subject)->toBe('Manager fix');
+    $response->assertForbidden();
+    expect($comm->fresh()->subject)->toBe('Original');
 });
 
 it('soft deletes a communication', function () {

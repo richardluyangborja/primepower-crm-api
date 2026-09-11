@@ -12,6 +12,7 @@ use App\Http\Resources\LeadDetailsResource;
 use App\Http\Resources\LeadResource;
 use App\Models\AuditLog;
 use App\Models\Client;
+use App\Models\Company;
 use App\Models\Lead;
 use App\Models\Reminder;
 use App\Models\StatusHistory;
@@ -28,6 +29,7 @@ class LeadController extends Controller
         $user = $request->user();
         $leads = $this->scopeVisibleTo($user, Lead::query())
             ->with(['company.primaryContact', 'assignedTo'])
+            ->when($request->boolean('exclude_converted'), fn ($q) => $q->where('status', '!=', LeadStatus::CONVERTED->value))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->filled('source'), fn ($q) => $q->where('source', $request->string('source')))
             ->when($request->filled('assigned_to_id'), fn ($q) => $q->where('assigned_to_id', $request->integer('assigned_to_id')))
@@ -100,6 +102,7 @@ class LeadController extends Controller
             'company.contacts',
             'opportunities.assignedTo',
             'assignedTo',
+            'client',
 
             'statusHistories.user',
             'communications.company',
@@ -258,6 +261,7 @@ class LeadController extends Controller
             'company.contacts',
             'opportunities.assignedTo',
             'assignedTo',
+            'client',
 
             'statusHistories.user',
             'communications.company',
@@ -304,6 +308,79 @@ class LeadController extends Controller
         $lead->load(['company.contacts', 'assignedTo']);
 
         return new LeadResource($lead);
+    }
+
+    public function destroy(Lead $lead)
+    {
+        $this->authorize('delete', $lead);
+
+        $company = $lead->company;
+
+        $blocker = null;
+        if ($lead->client()->exists()) {
+            $blocker = 'a converted client';
+        } elseif ($lead->opportunities()->exists()) {
+            $blocker = 'opportunities';
+        } elseif ($lead->reminders()->exists()) {
+            $blocker = 'reminders';
+        } elseif ($lead->statusHistories()->exists()) {
+            $blocker = 'status history';
+        } elseif ($company && $company->communications()->exists()) {
+            $blocker = 'communications';
+        }
+
+        if ($blocker) {
+            return response()->json([
+                'message' => "This lead cannot be deleted because it has {$blocker}.",
+            ], 409);
+        }
+
+        $companyName = $company?->name ?? "Lead #{$lead->id}";
+
+        AuditLog::log([
+            ...AuditLog::actor(),
+            'module' => 'Lead',
+            'action' => 'Deleted',
+            'subject_type' => 'Lead',
+            'subject_id' => (string) $lead->id,
+            'subject_name' => $companyName,
+            'description' => "Lead for company '{$companyName}' was deleted.",
+            'metadata' => [
+                'company_id' => $company?->id,
+                'company_name' => $companyName,
+                'assigned_to' => $lead->assignedTo?->name,
+                'source' => $lead->source,
+            ],
+        ]);
+
+        $lead->delete();
+
+        $companyStillReferenced = $company
+            && Company::query()
+                ->where('id', $company->id)
+                ->where(fn ($q) => $q->whereHas('leads')->orWhereHas('client')->orWhereHas('opportunities'))
+                ->exists();
+
+        if ($company && ! $companyStillReferenced) {
+            $company->delete();
+        }
+
+        return response()->noContent();
+    }
+
+    public function sources(Request $request)
+    {
+        $this->authorize('viewAny', Lead::class);
+
+        $user = $request->user();
+        $sources = $this->scopeVisibleTo($user, Lead::query())
+            ->whereNotNull('source')
+            ->where('source', '!=', '')
+            ->distinct()
+            ->orderBy('source')
+            ->pluck('source');
+
+        return response()->json(['data' => $sources]);
     }
 
     private function scopeVisibleTo(User $user, $query)

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\SnoozeReminderRequest;
 use App\Http\Requests\StoreReminderRequest;
 use App\Http\Requests\UpdateReminderRequest;
 use App\Http\Resources\ReminderResource;
@@ -22,6 +21,13 @@ class ReminderController extends Controller
         $user = $request->user();
         $reminders = $this->scopeVisibleTo($user, Reminder::query())
             ->with(['company', 'relatedTo', 'user'])
+            ->when($request->filled('q'), function ($q) use ($request) {
+                $search = $request->string('q');
+                $q->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                        ->orWhereHas('company', fn ($cq) => $cq->where('name', 'like', "%{$search}%"));
+                });
+            })
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->string('priority')))
             ->when($request->filled('user_id'), fn ($q) => $q->where('user_id', $request->integer('user_id')))
@@ -51,6 +57,20 @@ class ReminderController extends Controller
                 'relatedTo',
                 'user',
             ])
+            ->when($request->filled('q'), function ($q) use ($request) {
+                $search = $request->string('q');
+                $q->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                        ->orWhereHas('company', fn ($cq) => $cq->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->string('priority')))
+            ->when($request->filled('from'), fn ($q) => $q->whereDate('due_date', '>=', $request->date('from')))
+            ->when($request->filled('to'), fn ($q) => $q->whereDate('due_date', '<=', $request->date('to')))
+            ->when($request->filled('overdue') && $request->boolean('overdue'), function ($q) {
+                $q->where('is_completed', false)->whereDate('due_date', '<', now()->toDateString());
+            })
             ->latest()
             ->paginate(15);
 
@@ -183,33 +203,6 @@ class ReminderController extends Controller
             'description' => "Reminder '{$reminder->title}' was marked as incomplete.",
             'metadata' => [
                 'company_name' => $reminder->company?->name,
-            ],
-        ]);
-
-        return new ReminderResource($reminder);
-    }
-
-    public function snooze(SnoozeReminderRequest $request, Reminder $reminder)
-    {
-        $this->authorize('update', $reminder);
-
-        $reminder->update([
-            'due_date' => $request->date('due_date'),
-            'status' => 'snoozed',
-        ]);
-
-        $reminder->load(['company', 'relatedTo', 'user']);
-
-        AuditLog::log([
-            ...AuditLog::actor(),
-            'module' => 'Reminder',
-            'action' => 'Snoozed',
-            'subject_type' => 'Reminder',
-            'subject_id' => (string) $reminder->id,
-            'subject_name' => $reminder->title,
-            'description' => "Reminder '{$reminder->title}' was snoozed until {$reminder->due_date->toDateString()}.",
-            'metadata' => [
-                'new_due_date' => $reminder->due_date->toDateString(),
             ],
         ]);
 

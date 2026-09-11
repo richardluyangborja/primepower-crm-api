@@ -23,12 +23,12 @@ class CommunicationPolicy extends BasePolicy
 
     public function create(User $user): bool
     {
-        return $this->canManage($user) || $user->isSalesRep();
+        return $this->isAdmin($user) || $user->isSalesRep();
     }
 
     public function update(User $user, Communication $communication): bool
     {
-        if ($this->canManage($user)) {
+        if ($this->isAdmin($user)) {
             return true;
         }
 

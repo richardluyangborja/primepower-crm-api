@@ -137,9 +137,9 @@ class SatisfactionReportController extends Controller
                 : round($scored->avg('average_score'), 1);
 
             $rows[] = [
-            'rep_id' => $rep?->id,
-            'rep_name' => $rep?->name ?? 'Unassigned',
-            'clients_count' => $repClients->count(),
+                'rep_id' => $rep?->id,
+                'rep_name' => $rep?->name ?? 'Unassigned',
+                'clients_count' => $repClients->count(),
                 'surveys_sent' => $total,
                 'surveys_completed' => $completedCount,
                 'response_rate' => $total > 0 ? round(($completedCount / $total) * 100, 1) : 0.0,

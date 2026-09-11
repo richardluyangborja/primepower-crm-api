@@ -14,6 +14,8 @@ class LeadDetailsResource extends JsonResource
 
             'status' => $this->status->value,
 
+            'client_id' => $this->whenLoaded('client', fn () => $this->client?->id),
+
             'source' => $this->source,
 
             'notes' => $this->notes,
@@ -33,6 +35,8 @@ class LeadDetailsResource extends JsonResource
             'contacts' => $this->company->contacts->map(
                 fn ($contact) => [
                     'id' => $contact->id,
+                    'first_name' => $contact->first_name,
+                    'last_name' => $contact->last_name,
                     'name' => "{$contact->first_name} {$contact->last_name}",
                     'title' => $contact->title,
                     'email' => $contact->email,

@@ -19,12 +19,12 @@ class ClientPolicy extends BasePolicy
 
     public function create(User $user): bool
     {
-        return $this->canManage($user) || $user->isSalesRep();
+        return $this->isAdmin($user) || $user->isSalesRep();
     }
 
     public function update(User $user, Client $client): bool
     {
-        if ($this->canManage($user)) {
+        if ($this->isAdmin($user)) {
             return true;
         }
 
@@ -39,5 +39,14 @@ class ClientPolicy extends BasePolicy
     public function reassign(User $user, Client $client): bool
     {
         return $this->canManage($user);
+    }
+
+    public function delete(User $user, Client $client): bool
+    {
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        return $user->isSalesRep() && $client->assigned_to_id === $user->id;
     }
 }

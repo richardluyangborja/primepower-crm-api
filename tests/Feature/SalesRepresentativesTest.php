@@ -21,7 +21,6 @@ function seedRoleFixtures(): array
     $repActive = User::factory()->create([
         'role' => UserRole::SALES_REP,
         'email' => 'rep-active-'.uniqid().'@example.com',
-        'manager_id' => $manager->id,
     ]);
 
     $repInactive = User::factory()->create([

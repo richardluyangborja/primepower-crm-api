@@ -22,7 +22,7 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $query = User::query()->with(['manager'])->latest();
+        $query = User::query()->latest();
 
         if ($request->filled('role')) {
             $query->where('role', $request->string('role'));
@@ -54,7 +54,6 @@ class UserController extends Controller
 
         $user = DB::transaction(function () use ($data) {
             $user = User::create($data);
-            $user->load(['manager']);
 
             AuditLog::log([
                 ...AuditLog::actor(),
@@ -67,7 +66,6 @@ class UserController extends Controller
                 'metadata' => [
                     'email' => $user->email,
                     'role' => $user->role->value,
-                    'manager_id' => $user->manager_id,
                 ],
             ]);
 
@@ -83,8 +81,6 @@ class UserController extends Controller
     public function show(User $user)
     {
         $this->authorize('view', $user);
-
-        $user->load(['manager']);
 
         return new UserResource($user);
     }
@@ -104,7 +100,6 @@ class UserController extends Controller
 
         $previousRole = $user->role;
         $user->update($data);
-        $user->load(['manager']);
 
         $changes = [];
         foreach ($original as $key => $oldValue) {
@@ -190,7 +185,7 @@ class UserController extends Controller
             'metadata' => ['email' => $user->email],
         ]);
 
-        return response()->json(['data' => (new UserResource($user->fresh(['manager'])))->resolve()]);
+        return response()->json(['data' => (new UserResource($user->fresh()))->resolve()]);
     }
 
     public function activate(User $user): JsonResponse
@@ -210,7 +205,7 @@ class UserController extends Controller
             'metadata' => ['email' => $user->email],
         ]);
 
-        return response()->json(['data' => (new UserResource($user->fresh(['manager'])))->resolve()]);
+        return response()->json(['data' => (new UserResource($user->fresh()))->resolve()]);
     }
 
     public function resetPassword(ResetUserPasswordRequest $request, User $user): JsonResponse
@@ -247,7 +242,7 @@ class UserController extends Controller
     {
         $this->authorize('export', User::class);
 
-        $query = User::query()->with(['manager'])->latest();
+        $query = User::query()->latest();
 
         foreach (['role'] as $field) {
             if ($request->filled($field)) {
@@ -275,7 +270,7 @@ class UserController extends Controller
         return response()->streamDownload(function () use ($query) {
             $out = fopen('php://output', 'w');
             fputcsv($out, [
-                'id', 'name', 'email', 'role', 'manager', 'is_active', 'created_at',
+                'id', 'name', 'email', 'role', 'is_active', 'created_at',
             ]);
 
             $query->lazy()->each(function (User $user) use ($out) {
@@ -284,7 +279,6 @@ class UserController extends Controller
                     $user->name,
                     $user->email,
                     $user->role instanceof UserRole ? $user->role->value : (string) $user->role,
-                    $user->manager?->name,
                     $user->is_active ? 'yes' : 'no',
                     $user->created_at?->toDateTimeString(),
                 ]);

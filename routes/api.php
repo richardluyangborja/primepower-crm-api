@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ActionSuggestionController;
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientSatisfactionController;
@@ -31,9 +33,9 @@ Route::get('/me', function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('leads/mine', [LeadController::class, 'mine']);
+    Route::get('leads/sources', [LeadController::class, 'sources']);
 
-    Route::apiResource('leads', LeadController::class)
-        ->except(['destroy']);
+    Route::apiResource('leads', LeadController::class);
 
     Route::patch('leads/{lead}/status', [LeadController::class, 'updateStatus']);
     Route::patch('leads/{lead}/reassign', [LeadController::class, 'reassign']);
@@ -47,10 +49,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('companies/mine', [CompanyController::class, 'mine']);
 
+    Route::patch('companies/{company}', [CompanyController::class, 'update']);
+
     Route::get('clients/mine', [ClientController::class, 'mine']);
 
     Route::apiResource('clients', ClientController::class)
-        ->only(['index', 'show', 'update']);
+        ->only(['index', 'show', 'update', 'destroy']);
 
     Route::patch('clients/{client}/status', [ClientController::class, 'updateStatus']);
     Route::patch('clients/{client}/reassign', [ClientController::class, 'reassign']);
@@ -76,7 +80,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::patch('reminders/{reminder}/complete', [ReminderController::class, 'complete']);
     Route::patch('reminders/{reminder}/incomplete', [ReminderController::class, 'markIncomplete']);
-    Route::patch('reminders/{reminder}/snooze', [ReminderController::class, 'snooze']);
 
     Route::get('satisfaction', [ClientSatisfactionController::class, 'index']);
     Route::get('satisfaction/mine', [ClientSatisfactionController::class, 'mine']);
@@ -85,7 +88,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('satisfaction/report/export', [SatisfactionReportController::class, 'export']);
     Route::get('satisfaction/{client}', [ClientSatisfactionController::class, 'show']);
     Route::post('satisfaction/{client}/surveys', [ClientSatisfactionController::class, 'store']);
-    Route::post('satisfaction/{client}/surveys/manual', [ClientSatisfactionController::class, 'storeManual']);
     Route::delete('satisfaction/{client}/surveys/{survey}', [ClientSatisfactionController::class, 'destroy']);
 
     Route::apiResource('contacts', ContactController::class)
@@ -105,6 +107,14 @@ Route::middleware('auth:sanctum')->group(function () {
         ->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('dashboard', [DashboardController::class, 'index']);
+
+    Route::get('analytics/status', [AnalyticsController::class, 'status']);
+    Route::get('analytics/opportunities', [AnalyticsController::class, 'opportunities']);
+    Route::get('analytics/satisfaction', [AnalyticsController::class, 'satisfaction']);
+
+    Route::get('action-suggestions', [ActionSuggestionController::class, 'index']);
+    Route::get('action-suggestions/settings', [ActionSuggestionController::class, 'settings']);
+    Route::put('action-suggestions/settings', [ActionSuggestionController::class, 'updateSettings']);
 
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);

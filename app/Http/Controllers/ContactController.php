@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreContactRequest;
+use App\Http\Requests\UpdateContactRequest;
 use App\Models\AuditLog;
 use App\Models\Contact;
 use Illuminate\Http\JsonResponse;
@@ -50,14 +51,53 @@ class ContactController extends Controller
         ], 201);
     }
 
-    public function update(Contact $contact): JsonResponse
+    public function update(UpdateContactRequest $request, Contact $contact): JsonResponse
     {
         $this->authorize('update', $contact);
 
-        Contact::where('company_id', $contact->company_id)
-            ->update(['is_primary' => false]);
+        $validated = $request->validated();
 
-        $contact->update(['is_primary' => true]);
+        if (empty($validated)) {
+            // No fields provided — mark as primary (backward-compatible behaviour)
+            Contact::where('company_id', $contact->company_id)
+                ->update(['is_primary' => false]);
+
+            $contact->update(['is_primary' => true]);
+
+            $contact->load('company');
+
+            $contactName = "{$contact->first_name} {$contact->last_name}";
+
+            AuditLog::log([
+                ...AuditLog::actor(),
+                'module' => 'Contact',
+                'action' => 'Marked Primary',
+                'subject_type' => 'Contact',
+                'subject_id' => (string) $contact->id,
+                'subject_name' => $contactName,
+                'description' => "Contact '{$contactName}' was set as the primary contact"
+                    .($contact->company?->name ? " for company '{$contact->company->name}'" : '')
+                    .'.',
+                'metadata' => [
+                    'company_name' => $contact->company?->name,
+                    'is_primary' => true,
+                ],
+            ]);
+
+            return response()->json([
+                'data' => [
+                    'id' => $contact->id,
+                    'name' => $contactName,
+                    'title' => $contact->title,
+                    'email' => $contact->email,
+                    'phone' => $contact->phone,
+                    'is_primary' => true,
+                ],
+            ]);
+        }
+
+        // Fields provided — update them
+        $contact->update($validated);
 
         $contact->load('company');
 
@@ -66,16 +106,18 @@ class ContactController extends Controller
         AuditLog::log([
             ...AuditLog::actor(),
             'module' => 'Contact',
-            'action' => 'Marked Primary',
+            'action' => 'Updated',
             'subject_type' => 'Contact',
             'subject_id' => (string) $contact->id,
             'subject_name' => $contactName,
-            'description' => "Contact '{$contactName}' was set as the primary contact"
+            'description' => "Contact '{$contactName}' was updated"
                 .($contact->company?->name ? " for company '{$contact->company->name}'" : '')
                 .'.',
             'metadata' => [
                 'company_name' => $contact->company?->name,
-                'is_primary' => true,
+                'title' => $contact->title,
+                'email' => $contact->email,
+                'phone' => $contact->phone,
             ],
         ]);
 
@@ -83,10 +125,12 @@ class ContactController extends Controller
             'data' => [
                 'id' => $contact->id,
                 'name' => $contactName,
+                'first_name' => $contact->first_name,
+                'last_name' => $contact->last_name,
                 'title' => $contact->title,
                 'email' => $contact->email,
                 'phone' => $contact->phone,
-                'is_primary' => true,
+                'is_primary' => $contact->is_primary,
             ],
         ]);
     }

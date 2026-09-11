@@ -9,18 +9,32 @@ use App\Models\AuditLog;
 use App\Models\Client;
 use App\Models\ClientSurvey;
 use App\Models\SurveyTemplate;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Stringable;
 use Illuminate\Validation\Rule;
 
 class ClientSatisfactionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $user = $request->user();
+
         $clients = Client::query()
             ->with([
                 'company.primaryContact',
                 'surveys',
             ])
+            ->when(
+                $user !== null && ! $user->isAdmin(),
+                fn ($query) => $query->whereIn('assigned_to_id', $user->visibleUserIds())
+            )
+            ->when($request->filled('q'), fn ($query) => $this->applySearch($query, $request->string('q')))
+            ->when($request->filled('trend'), fn ($query) => $this->applyTrendFilter($query, (string) $request->string('trend')))
+            ->when($request->filled('score'), fn ($query) => $this->applyScoreFilter($query, (string) $request->string('score')))
+            ->when($request->filled('from'), fn ($query) => $this->applySurveyDateFrom($query, $request->date('from')))
+            ->when($request->filled('to'), fn ($query) => $this->applySurveyDateTo($query, $request->date('to')))
             ->latest()
             ->paginate(15);
 
@@ -37,14 +51,21 @@ class ClientSatisfactionController extends Controller
                 'company.primaryContact',
                 'surveys',
             ])
+            ->when($request->filled('q'), fn ($query) => $this->applySearch($query, $request->string('q')))
+            ->when($request->filled('trend'), fn ($query) => $this->applyTrendFilter($query, (string) $request->string('trend')))
+            ->when($request->filled('score'), fn ($query) => $this->applyScoreFilter($query, (string) $request->string('score')))
+            ->when($request->filled('from'), fn ($query) => $this->applySurveyDateFrom($query, $request->date('from')))
+            ->when($request->filled('to'), fn ($query) => $this->applySurveyDateTo($query, $request->date('to')))
             ->latest()
             ->paginate(15);
 
         return ClientSatisfactionSummaryResource::collection($clients);
     }
 
-    public function show(Client $client)
+    public function show(Request $request, Client $client)
     {
+        $this->authorize('view', $client);
+
         $client->load([
             'company.primaryContact',
             'surveys',
@@ -55,6 +76,8 @@ class ClientSatisfactionController extends Controller
 
     public function store(Request $request, Client $client)
     {
+        $this->authorize('update', $client);
+
         $validated = $request->validate([
             'template_id' => ['nullable', 'integer', Rule::exists('survey_templates', 'id')],
         ]);
@@ -98,75 +121,13 @@ class ClientSatisfactionController extends Controller
         ]);
     }
 
-    public function storeManual(Request $request, Client $client)
-    {
-        $this->authorize('update', $client);
-
-        $validated = $request->validate([
-            'template_id' => ['nullable', 'integer', Rule::exists('survey_templates', 'id')],
-            'responses' => ['required', 'array', 'min:1'],
-            'responses.*.question_id' => ['required', 'string'],
-            'responses.*.score' => ['required', 'integer', 'min:1', 'max:5'],
-            'respondent_name' => ['nullable', 'string', 'max:255'],
-            'respondent_position' => ['nullable', 'string', 'max:255'],
-            'feedback' => ['nullable', 'string'],
-            'completed_at' => ['nullable', 'date'],
-        ]);
-
-        $templateVersion = null;
-        if (! empty($validated['template_id'])) {
-            $templateVersion = SurveyTemplate::find($validated['template_id'])
-                ?->currentVersion;
-        }
-
-        $responses = $validated['responses'];
-        $scores = array_column($responses, 'score');
-        $averageScore = count($scores) > 0
-            ? round(array_sum($scores) / count($scores), 2)
-            : null;
-
-        $survey = ClientSurvey::create([
-            'client_id' => $client->id,
-            'template_version_id' => $templateVersion?->id,
-            'token' => 'srv_'.bin2hex(random_bytes(16)),
-            'status' => 'completed',
-            'responses' => $responses,
-            'average_score' => $averageScore,
-            'completed_at' => $validated['completed_at'] ?? now(),
-            'respondent_name' => $validated['respondent_name'] ?? null,
-            'respondent_position' => $validated['respondent_position'] ?? null,
-            'feedback' => $validated['feedback'] ?? null,
-        ]);
-
-        AuditLog::log([
-            ...AuditLog::actor(),
-            'module' => 'Client Satisfaction',
-            'action' => 'Survey Recorded (Manual)',
-            'subject_type' => 'ClientSurvey',
-            'subject_id' => (string) $survey->id,
-            'subject_name' => $client->company?->name ?? "Client #{$client->id}",
-            'description' => "A satisfaction survey was recorded manually for client '{$client->company?->name}'."
-                .($request->user() ? " by {$request->user()->name}." : '.'),
-            'metadata' => [
-                'client_name' => $client->company?->name,
-                'average_score' => $survey->average_score,
-                'responses_count' => count($responses),
-                'completed_at' => $survey->completed_at?->toDateTimeString(),
-            ],
-        ]);
-
-        return new ClientSurveyResource($survey);
-    }
-
-    public function destroy(Client $client, ClientSurvey $survey)
+    public function destroy(Request $request, Client $client, ClientSurvey $survey)
     {
         if ($survey->client_id !== $client->id) {
             abort(404, 'Survey not found for this client');
         }
 
-        if ($survey->status === 'completed') {
-            abort(422, 'Cannot delete a completed survey');
-        }
+        $this->authorize('update', $survey->client);
 
         $surveyToken = $survey->token;
         $surveyStatus = $survey->status;
@@ -191,5 +152,77 @@ class ClientSatisfactionController extends Controller
         return response()->json([
             'message' => 'Survey deleted successfully',
         ]);
+    }
+
+    private function applySearch(Builder $query, Stringable $search): Builder
+    {
+        return $query->where(function (Builder $q) use ($search) {
+            $q->whereHas('company', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('company.primaryContact', function ($cq) use ($search) {
+                    $cq->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                });
+        });
+    }
+
+    private function applyTrendFilter(Builder $query, string $trend): Builder
+    {
+        $operator = match ($trend) {
+            'up' => '>',
+            'down' => '<',
+            'stable' => '=',
+            default => null,
+        };
+
+        if ($operator === null) {
+            return $query;
+        }
+
+        return $query->whereRaw(
+            "{$this->latestScoreSubquery()} {$operator} {$this->previousScoreSubquery()}"
+        );
+    }
+
+    private function applyScoreFilter(Builder $query, string $score): Builder
+    {
+        $subquery = $this->averageScoreSubquery();
+
+        return match ($score) {
+            'ge4' => $query->whereRaw("{$subquery} >= 4"),
+            'ge3' => $query->whereRaw("{$subquery} >= 3 AND {$subquery} < 4"),
+            'lt3' => $query->whereRaw("{$subquery} < 3"),
+            default => $query,
+        };
+    }
+
+    private function applySurveyDateFrom(Builder $query, Carbon $from): Builder
+    {
+        return $query->whereHas('surveys', function (Builder $q) use ($from) {
+            $q->where('status', 'completed')
+                ->whereDate('completed_at', '>=', $from);
+        });
+    }
+
+    private function applySurveyDateTo(Builder $query, Carbon $to): Builder
+    {
+        return $query->whereHas('surveys', function (Builder $q) use ($to) {
+            $q->where('status', 'completed')
+                ->whereDate('completed_at', '<=', $to);
+        });
+    }
+
+    private function averageScoreSubquery(): string
+    {
+        return '(select avg(average_score) from client_surveys where client_id = clients.id and status = \'completed\')';
+    }
+
+    private function latestScoreSubquery(): string
+    {
+        return '(select s.average_score from client_surveys s where s.client_id = clients.id and s.status = \'completed\' order by s.completed_at desc limit 1)';
+    }
+
+    private function previousScoreSubquery(): string
+    {
+        return '(select s.average_score from client_surveys s where s.client_id = clients.id and s.status = \'completed\' order by s.completed_at desc limit 1 offset 1)';
     }
 }

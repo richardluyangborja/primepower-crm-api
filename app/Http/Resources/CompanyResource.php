@@ -9,6 +9,25 @@ class CompanyResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $salesRepresentative = null;
+
+        // NOTE: do not gate this on whenLoaded('client') — when the company
+        // is lead-only the client relationship loads to null and whenLoaded
+        // returns early, so the rep would never resolve. Compute it directly.
+        if ($this->relationLoaded('client') || $this->relationLoaded('leads')) {
+            if ($this->client && $this->client->assignedTo) {
+                $salesRepresentative = [
+                    'id' => $this->client->assignedTo->id,
+                    'name' => $this->client->assignedTo->name,
+                ];
+            } elseif ($this->leads->isNotEmpty() && $this->leads->first()->assignedTo) {
+                $salesRepresentative = [
+                    'id' => $this->leads->first()->assignedTo->id,
+                    'name' => $this->leads->first()->assignedTo->name,
+                ];
+            }
+        }
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -38,22 +57,7 @@ class CompanyResource extends JsonResource
                 ] : null;
             }),
 
-            'sales_representative' => $this->whenLoaded('client', function () {
-                if ($this->client && $this->client->assignedTo) {
-                    return [
-                        'id' => $this->client->assignedTo->id,
-                        'name' => $this->client->assignedTo->name,
-                    ];
-                }
-                if ($this->leads->isNotEmpty() && $this->leads->first()->assignedTo) {
-                    return [
-                        'id' => $this->leads->first()->assignedTo->id,
-                        'name' => $this->leads->first()->assignedTo->name,
-                    ];
-                }
-
-                return null;
-            }),
+            'sales_representative' => $salesRepresentative,
         ];
     }
 }

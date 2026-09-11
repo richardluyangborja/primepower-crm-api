@@ -19,12 +19,12 @@ class ReminderPolicy extends BasePolicy
 
     public function create(User $user): bool
     {
-        return $this->canManage($user) || $user->isSalesRep();
+        return $this->isAdmin($user) || $user->isSalesRep();
     }
 
     public function update(User $user, Reminder $reminder): bool
     {
-        if ($this->canManage($user)) {
+        if ($this->isAdmin($user)) {
             return true;
         }
 
@@ -33,6 +33,10 @@ class ReminderPolicy extends BasePolicy
 
     public function delete(User $user, Reminder $reminder): bool
     {
-        return $this->canManage($user);
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        return $reminder->user_id === $user->id;
     }
 }

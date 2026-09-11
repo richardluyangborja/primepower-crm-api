@@ -12,6 +12,19 @@ enum OpportunityStage: string
     case WON = 'won';
     case LOST = 'lost';
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::INITIAL_CONTACT => 'Initial Contact',
+            self::DISCUSSION => 'Discussion',
+            self::PROPOSAL => 'Proposal',
+            self::NEGOTIATION => 'Negotiation',
+            self::CONTRACT_PROCESSING => 'Contract Processing',
+            self::WON => 'Won',
+            self::LOST => 'Lost',
+        };
+    }
+
     public function validTransitions(): array
     {
         return match ($this) {

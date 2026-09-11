@@ -18,9 +18,9 @@ class UpdateReminderRequest extends FormRequest
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'due_date' => ['sometimes', 'required', 'date'],
+            'due_date' => ['sometimes', 'required', 'date', 'after_or_equal:today'],
             'priority' => ['sometimes', Rule::enum(ReminderPriority::class)],
-            'status' => ['sometimes', 'string', Rule::in(['pending', 'completed', 'incomplete', 'snoozed'])],
+            'status' => ['sometimes', 'string', Rule::in(['pending', 'completed', 'incomplete'])],
             'assigned_to_name' => ['nullable', 'string', 'max:255'],
             'company_id' => ['nullable', 'integer', 'exists:companies,id'],
             'related_to_type' => ['nullable', 'string', 'max:255'],

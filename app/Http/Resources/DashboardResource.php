@@ -2,9 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\ClientSurveyStatus;
 use App\Enums\LeadStatus;
 use App\Enums\OpportunityStage;
+use App\Enums\UserRole;
 use App\Models\Client;
+use App\Models\ClientSurvey;
 use App\Models\Communication;
 use App\Models\Lead;
 use App\Models\Opportunity;
@@ -14,6 +17,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class DashboardResource extends JsonResource
@@ -26,6 +30,8 @@ class DashboardResource extends JsonResource
         $to = $request->filled('to') ? $request->date('to') : null;
 
         $scope = $this->buildScope($user, $repId);
+        $reminderScope = $this->buildScope($user, $repId, 'user_id');
+        $communicationScope = $this->buildScope($user, $repId, 'user_id', true);
 
         return [
             'scope' => [
@@ -34,42 +40,41 @@ class DashboardResource extends JsonResource
                 'to' => $to?->toDateString(),
                 'role' => $user?->role instanceof \BackedEnum ? $user->role->value : $user?->role,
             ],
-            'summary' => $this->summary($scope, $from, $to),
+            'summary' => $this->summary($scope, $reminderScope, $from, $to),
             'leads' => $this->leads($scope, $from, $to),
             'clients' => $this->clients($scope, $from, $to),
             'opportunities' => $this->opportunities($scope, $from, $to),
-            'communications' => $this->communications($scope, $from, $to),
-            'reminders' => $this->reminders($scope),
+            'communications' => $this->communications($communicationScope, $from, $to),
+            'reminders' => $this->reminders($reminderScope),
             'satisfaction' => $this->satisfaction($scope, $repId),
+            'performance' => $this->performance($user),
         ];
     }
 
-    private function buildScope(?User $user, ?int $repId): \Closure
+    private function buildScope(?User $user, ?int $repId, string $column = 'assigned_to_id', bool $includeUnassigned = false): \Closure
     {
-        return function (Builder $query) use ($user, $repId) {
+        return function (Builder $query) use ($user, $repId, $column, $includeUnassigned) {
             if (! $user) {
                 return $query;
             }
 
-            if ($user->isAdmin() && $repId) {
-                return $query->where('assigned_to_id', $repId);
+            // Admin and manager both view the whole dataset; the optional
+            // rep filter narrows either to a single representative.
+            if ($user->isAdmin() || $user->isManager()) {
+                return $repId ? $query->where($column, $repId) : $query;
             }
 
-            if ($user->isAdmin()) {
-                return $query;
-            }
+            return $query->where(function (Builder $q) use ($user, $column, $includeUnassigned) {
+                $q->whereIn($column, $user->visibleUserIds());
 
-            $ids = $user->visibleUserIds();
-
-            if ($user->isManager() && $repId && in_array($repId, $ids, true)) {
-                return $query->where('assigned_to_id', $repId);
-            }
-
-            return $query->whereIn('assigned_to_id', $ids);
+                if ($includeUnassigned) {
+                    $q->orWhereNull($column);
+                }
+            });
         };
     }
 
-    private function summary(\Closure $scope, $from, $to): array
+    private function summary(\Closure $scope, \Closure $reminderScope, $from, $to): array
     {
         $leadQuery = Lead::query();
         $scope($leadQuery);
@@ -89,7 +94,7 @@ class DashboardResource extends JsonResource
         $totalContractValue = (clone $oppQuery)->where('stage', OpportunityStage::WON)->sum('estimated_contract_value');
 
         $reminderQuery = Reminder::query();
-        $scope($reminderQuery);
+        $reminderScope($reminderQuery);
         $activeReminders = $reminderQuery->where('is_completed', false)->count();
 
         $lost = (clone $oppQuery)->where('stage', OpportunityStage::LOST)->count();
@@ -263,12 +268,42 @@ class DashboardResource extends JsonResource
             ];
         }
 
+        // All opportunities created per month (count + value) — the pipeline trend.
+        $monthly = (clone $query)->select(
+            DB::raw($this->monthExpression('created_at').' as month'),
+            DB::raw('count(*) as count'),
+            DB::raw('sum(estimated_contract_value) as total_value')
+        )
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $trendData = [];
+        foreach ($monthly as $row) {
+            $trendData[] = [
+                'month' => $row->month,
+                'count' => (int) $row->count,
+                'value' => (float) $row->total_value,
+            ];
+        }
+
+        $winLoss = [];
+        foreach ([OpportunityStage::WON, OpportunityStage::LOST] as $outcome) {
+            $winLoss[] = [
+                'stage' => $outcome->value,
+                'count' => (int) ($byStage[$outcome->value] ?? 0),
+                'value' => (float) ($valueByStage[$outcome->value] ?? 0),
+            ];
+        }
+
         $avgTimeInStage = $this->avgTimeInStage($scope);
 
         return [
             'by_stage' => $stageData,
             'value_by_stage' => $valueData,
             'monthly_won' => $monthlyWonData,
+            'trend' => $trendData,
+            'win_loss' => $winLoss,
             'avg_deal_size' => (float) ($avgDealSize ?? 0),
             'avg_time_in_stage_days' => $avgTimeInStage,
             'total_opportunities' => $query->count(),
@@ -408,6 +443,7 @@ class DashboardResource extends JsonResource
     {
         $query = Client::query()->with('surveys');
         $scope($query);
+        /** @var Collection<int, Client> $clients */
         $clients = $query->get();
 
         $totalSurveys = 0;
@@ -464,8 +500,77 @@ class DashboardResource extends JsonResource
                 ['label' => '4-4.9', 'count' => $scoreDistribution[3]],
                 ['label' => '5', 'count' => $scoreDistribution[4]],
             ],
+            'trend' => $this->satisfactionTrend($clients),
+            'by_question' => $this->satisfactionByQuestion($clients),
             'per_rep' => $perRep,
         ];
+    }
+
+    /**
+     * Average completed-survey score per month, oldest first.
+     */
+    private function satisfactionTrend(Collection $clients): array
+    {
+        $byMonth = [];
+        foreach ($clients as $client) {
+            foreach ($client->surveys as $survey) {
+                if ($survey->status !== ClientSurveyStatus::COMPLETED
+                    || $survey->average_score === null
+                    || $survey->completed_at === null) {
+                    continue;
+                }
+                $month = $survey->completed_at->format('Y-m');
+                $byMonth[$month][] = (float) $survey->average_score;
+            }
+        }
+        ksort($byMonth);
+
+        $trend = [];
+        foreach ($byMonth as $month => $scores) {
+            $trend[] = [
+                'month' => $month,
+                'average_score' => round(array_sum($scores) / count($scores), 1),
+            ];
+        }
+
+        return $trend;
+    }
+
+    /**
+     * Average score per survey question across completed surveys. Responses
+     * are keyed by question id (q1..q5) with no template text, so each is
+     * labelled by its position.
+     */
+    private function satisfactionByQuestion(Collection $clients): array
+    {
+        $scoresByQuestion = [];
+        foreach ($clients as $client) {
+            foreach ($client->surveys as $survey) {
+                if ($survey->status !== ClientSurveyStatus::COMPLETED || empty($survey->responses)) {
+                    continue;
+                }
+                foreach ($survey->responses as $response) {
+                    $question = is_array($response) ? ($response['question_id'] ?? null) : null;
+                    $score = is_array($response) && isset($response['score']) ? (float) $response['score'] : null;
+                    if ($question !== null && $score !== null) {
+                        $scoresByQuestion[$question][] = $score;
+                    }
+                }
+            }
+        }
+        ksort($scoresByQuestion);
+
+        $byQuestion = [];
+        foreach ($scoresByQuestion as $question => $scores) {
+            $position = preg_replace('/\D+/', '', (string) $question);
+            $byQuestion[] = [
+                'question' => $question,
+                'label' => $position !== '' ? 'Question '.$position : $question,
+                'average_score' => round(array_sum($scores) / count($scores), 1),
+            ];
+        }
+
+        return $byQuestion;
     }
 
     private function satisfactionPerRep(?int $repId): array
@@ -496,6 +601,78 @@ class DashboardResource extends JsonResource
         }
 
         return $result;
+    }
+
+    /**
+     * Per-sales-rep KPI comparison. Admin and manager get every active rep —
+     * the cross-rep view — while a sales rep gets their own single row.
+     */
+    private function performance(?User $user): array
+    {
+        if (! $user) {
+            return [];
+        }
+
+        if ($user->isAdmin() || $user->isManager()) {
+            $reps = User::query()
+                ->where('role', UserRole::SALES_REP)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name']);
+
+            return $reps
+                ->map(fn ($rep) => $this->repPerformanceRow($rep->id, $rep->name))
+                ->values()
+                ->all();
+        }
+
+        return [$this->repPerformanceRow($user->id, $user->name)];
+    }
+
+    /**
+     * Build the KPI row for a single sales rep (open pipeline + satisfaction).
+     */
+    private function repPerformanceRow(int $repId, string $repName): array
+    {
+        $oppQuery = Opportunity::query()->where('assigned_to_id', $repId);
+        $total = (clone $oppQuery)->count();
+        $won = (clone $oppQuery)->where('stage', OpportunityStage::WON)->count();
+        $lost = (clone $oppQuery)->where('stage', OpportunityStage::LOST)->count();
+        $closed = $won + $lost;
+
+        $surveyQuery = ClientSurvey::query()
+            ->join('clients', 'client_surveys.client_id', '=', 'clients.id')
+            ->where('clients.assigned_to_id', $repId);
+        $sent = (clone $surveyQuery)->count();
+        $completed = (clone $surveyQuery)->where('client_surveys.status', ClientSurveyStatus::COMPLETED->value)->count();
+
+        return [
+            'rep_id' => $repId,
+            'rep_name' => $repName,
+            'open_opportunities' => max(0, $total - $won - $lost),
+            'pipeline_value' => round((float) (clone $oppQuery)
+                ->whereNotIn('stage', [OpportunityStage::WON, OpportunityStage::LOST])
+                ->sum('estimated_contract_value'), 2),
+            'won_count' => $won,
+            'win_rate' => $closed > 0 ? round(($won / $closed) * 100, 1) : 0.0,
+            'average_score' => $this->repAverageScore($repId),
+            'response_rate' => $sent > 0 ? round(($completed / $sent) * 100, 1) : 0.0,
+        ];
+    }
+
+    /**
+     * Average score across the rep's completed surveys, or null when none.
+     */
+    private function repAverageScore(int $repId): ?float
+    {
+        $avg = ClientSurvey::query()
+            ->join('clients', 'client_surveys.client_id', '=', 'clients.id')
+            ->where('clients.assigned_to_id', $repId)
+            ->where('client_surveys.status', ClientSurveyStatus::COMPLETED->value)
+            ->whereNotNull('client_surveys.average_score')
+            ->avg('client_surveys.average_score');
+
+        return $avg !== null ? round((float) $avg, 1) : null;
     }
 
     private function applyDateRange(Builder $query, string $column, $from, $to): void

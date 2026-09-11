@@ -44,6 +44,7 @@ class OpportunitySeeder extends Seeder
             $metro->id
         )->firstOrFail();
 
+        // ── ABC Manufacturing: Negotiation stage, created Jan 2026 ──
         $abcOpp = Opportunity::create([
             'company_id' => $abc->id,
             'lead_id' => $abcLead->id,
@@ -62,7 +63,7 @@ class OpportunitySeeder extends Seeder
             'from_stage' => null,
             'to_stage' => OpportunityStage::INITIAL_CONTACT->value,
             'reason' => 'Initial inquiry from production manager.',
-            'created_at' => now()->subDays(60),
+            'created_at' => now()->subDays(240),
         ]);
 
         StageHistory::create([
@@ -71,7 +72,7 @@ class OpportunitySeeder extends Seeder
             'from_stage' => OpportunityStage::INITIAL_CONTACT->value,
             'to_stage' => OpportunityStage::DISCUSSION->value,
             'reason' => 'First meeting scheduled with HR and operations.',
-            'created_at' => now()->subDays(45),
+            'created_at' => now()->subDays(200),
         ]);
 
         StageHistory::create([
@@ -80,7 +81,7 @@ class OpportunitySeeder extends Seeder
             'from_stage' => OpportunityStage::DISCUSSION->value,
             'to_stage' => OpportunityStage::PROPOSAL->value,
             'reason' => 'Client requested formal proposal for 50 workers.',
-            'created_at' => now()->subDays(30),
+            'created_at' => now()->subDays(160),
         ]);
 
         StageHistory::create([
@@ -89,9 +90,10 @@ class OpportunitySeeder extends Seeder
             'from_stage' => OpportunityStage::PROPOSAL->value,
             'to_stage' => OpportunityStage::NEGOTIATION->value,
             'reason' => 'Client reviewing contract terms with legal team.',
-            'created_at' => now()->subDays(15),
+            'created_at' => now()->subDays(120),
         ]);
 
+        // ── Prime Logistics: Discussion stage, created Mar 2026 ──
         $primeOpp = Opportunity::create([
             'company_id' => $prime->id,
             'lead_id' => $primeLead->id,
@@ -110,7 +112,7 @@ class OpportunitySeeder extends Seeder
             'from_stage' => null,
             'to_stage' => OpportunityStage::INITIAL_CONTACT->value,
             'reason' => 'New lead captured from website inquiry.',
-            'created_at' => now()->subDays(10),
+            'created_at' => now()->subDays(175),
         ]);
 
         StageHistory::create([
@@ -119,9 +121,10 @@ class OpportunitySeeder extends Seeder
             'from_stage' => OpportunityStage::INITIAL_CONTACT->value,
             'to_stage' => OpportunityStage::DISCUSSION->value,
             'reason' => 'Initial call completed, client interested.',
-            'created_at' => now()->subDays(5),
+            'created_at' => now()->subDays(140),
         ]);
 
+        // ── Metro Retail: Additional Store Staffing, Proposal stage ──
         $metroAdditionalOpp = Opportunity::create([
             'company_id' => $metro->id,
             'client_id' => $metroClient->id,
@@ -140,7 +143,7 @@ class OpportunitySeeder extends Seeder
             'from_stage' => null,
             'to_stage' => OpportunityStage::INITIAL_CONTACT->value,
             'reason' => 'Existing client requested additional staffing.',
-            'created_at' => now()->subDays(40),
+            'created_at' => now()->subDays(195),
         ]);
 
         StageHistory::create([
@@ -149,7 +152,7 @@ class OpportunitySeeder extends Seeder
             'from_stage' => OpportunityStage::INITIAL_CONTACT->value,
             'to_stage' => OpportunityStage::DISCUSSION->value,
             'reason' => 'Meeting held to discuss store locations and timelines.',
-            'created_at' => now()->subDays(25),
+            'created_at' => now()->subDays(165),
         ]);
 
         StageHistory::create([
@@ -158,9 +161,10 @@ class OpportunitySeeder extends Seeder
             'from_stage' => OpportunityStage::DISCUSSION->value,
             'to_stage' => OpportunityStage::PROPOSAL->value,
             'reason' => 'Formal proposal submitted for 20 additional staff.',
-            'created_at' => now()->subDays(15),
+            'created_at' => now()->subDays(135),
         ]);
 
+        // ── Metro Retail: Seasonal Staffing, Lost ──
         $metroSeasonalOpp = Opportunity::create([
             'company_id' => $metro->id,
             'client_id' => $metroClient->id,
@@ -180,7 +184,7 @@ class OpportunitySeeder extends Seeder
             'from_stage' => null,
             'to_stage' => OpportunityStage::INITIAL_CONTACT->value,
             'reason' => 'Client reached out for seasonal staffing needs.',
-            'created_at' => now()->subMonths(3),
+            'created_at' => now()->subDays(155),
         ]);
 
         StageHistory::create([
@@ -189,7 +193,7 @@ class OpportunitySeeder extends Seeder
             'from_stage' => OpportunityStage::INITIAL_CONTACT->value,
             'to_stage' => OpportunityStage::DISCUSSION->value,
             'reason' => 'Initial requirements gathering call.',
-            'created_at' => now()->subMonths(2)->addDays(25),
+            'created_at' => now()->subDays(125),
         ]);
 
         StageHistory::create([
@@ -198,7 +202,7 @@ class OpportunitySeeder extends Seeder
             'from_stage' => OpportunityStage::DISCUSSION->value,
             'to_stage' => OpportunityStage::PROPOSAL->value,
             'reason' => 'Proposal submitted for 15 seasonal staff.',
-            'created_at' => now()->subMonths(2),
+            'created_at' => now()->subDays(95),
         ]);
 
         StageHistory::create([
@@ -207,7 +211,7 @@ class OpportunitySeeder extends Seeder
             'from_stage' => OpportunityStage::PROPOSAL->value,
             'to_stage' => OpportunityStage::NEGOTIATION->value,
             'reason' => 'Client requested revised pricing.',
-            'created_at' => now()->subMonths(1)->addDays(20),
+            'created_at' => now()->subDays(65),
         ]);
 
         StageHistory::create([
@@ -216,7 +220,7 @@ class OpportunitySeeder extends Seeder
             'from_stage' => OpportunityStage::NEGOTIATION->value,
             'to_stage' => OpportunityStage::LOST->value,
             'reason' => 'Client postponed the requirement indefinitely.',
-            'created_at' => now()->subDays(12),
+            'created_at' => now()->subDays(30),
         ]);
     }
 }

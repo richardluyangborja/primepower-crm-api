@@ -2,7 +2,6 @@
 
 use App\Enums\ReminderPriority;
 use App\Enums\UserRole;
-use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\Reminder;
 use App\Models\User;
@@ -20,7 +19,6 @@ function seedReminderActor(array $overrides = []): array
     $rep = User::factory()->create([
         'role' => UserRole::SALES_REP,
         'email' => 'rep-reminder-'.uniqid().'@example.com',
-        'manager_id' => $manager->id,
     ]);
 
     $other = User::factory()->create([
@@ -105,66 +103,34 @@ it('spawns the next occurrence when a recurring reminder is completed', function
     expect($next->recurrence_rule)->toBe('weekly');
 });
 
-it('snoozes a reminder to a future date', function () {
-    [$manager, $rep, $other, $company] = seedReminderActor();
-    $reminder = makeReminder($rep, $company);
-
-    $newDate = now()->addDays(3)->toDateString();
-
-    $response = $this->actingAs($rep)->patchJson("/api/reminders/{$reminder->id}/snooze", [
-        'due_date' => $newDate,
-    ]);
-
-    $response->assertOk();
-    expect($reminder->fresh()->due_date->toDateString())->toBe($newDate);
-    expect($reminder->fresh()->status)->toBe('snoozed');
-});
-
-it('rejects a snooze to the past', function () {
-    [$manager, $rep, $other, $company] = seedReminderActor();
-    $reminder = makeReminder($rep, $company);
-
-    $this->actingAs($rep)->patchJson("/api/reminders/{$reminder->id}/snooze", [
-        'due_date' => now()->subDay()->toDateString(),
-    ])->assertStatus(422);
-});
-
-it('blocks a sales rep from snoozing another reps reminder', function () {
-    [$manager, $rep, $other, $company] = seedReminderActor();
-    $reminder = makeReminder($rep, $company);
-
-    $this->actingAs($other)->patchJson("/api/reminders/{$reminder->id}/snooze", [
-        'due_date' => now()->addDays(2)->toDateString(),
-    ])->assertForbidden();
-});
-
-it('lets a manager snooze a team members reminder', function () {
-    [$manager, $rep, $other, $company] = seedReminderActor();
-    $reminder = makeReminder($rep, $company);
-
-    $this->actingAs($manager)->patchJson("/api/reminders/{$reminder->id}/snooze", [
-        'due_date' => now()->addDays(2)->toDateString(),
-    ])->assertOk();
-});
-
-it('lets a manager delete a team reminder and logs the action', function () {
+it('blocks a manager from deleting a team reminder', function () {
     [$manager, $rep, $other, $company] = seedReminderActor();
     $reminder = makeReminder($rep, $company);
 
     $this->actingAs($manager)->deleteJson("/api/reminders/{$reminder->id}")
-        ->assertNoContent();
+        ->assertForbidden();
 
-    expect(Reminder::find($reminder->id))->toBeNull();
-    expect(AuditLog::where('subject_id', (string) $reminder->id)
-        ->where('action', 'Deleted')->exists())->toBeTrue();
+    expect(Reminder::find($reminder->id))->not->toBeNull();
 });
 
-it('blocks a rep from deleting their own reminder', function () {
+it('allows a rep to delete their own reminder', function () {
     [$manager, $rep, $other, $company] = seedReminderActor();
     $reminder = makeReminder($rep, $company);
 
     $this->actingAs($rep)->deleteJson("/api/reminders/{$reminder->id}")
+        ->assertNoContent();
+
+    expect(Reminder::find($reminder->id))->toBeNull();
+});
+
+it('blocks a rep from deleting another reps reminder', function () {
+    [$manager, $rep, $other, $company] = seedReminderActor();
+    $reminder = makeReminder($rep, $company);
+
+    $this->actingAs($other)->deleteJson("/api/reminders/{$reminder->id}")
         ->assertForbidden();
+
+    expect(Reminder::find($reminder->id))->not->toBeNull();
 });
 
 it('sends due reminder notifications via the artisan command', function () {
