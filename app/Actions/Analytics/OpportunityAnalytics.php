@@ -5,6 +5,7 @@ namespace App\Actions\Analytics;
 use App\Enums\OpportunityStage;
 use App\Models\Opportunity;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
 /**
@@ -45,12 +46,14 @@ class OpportunityAnalytics
      * Analyze the pipeline as the user can see it.
      *
      * @param  array<string, string|int|float>|null  $settings  Threshold overrides from action_suggestion_settings
+     * @param  CarbonInterface|null  $from  Optional created-at window lower bound.
+     * @param  CarbonInterface|null  $to  Optional created-at window upper bound.
      * @return array{generated_at: string, empty: bool, metrics: array, suggested_actions: array}
      */
-    public function analyze(User $user, ?array $settings = null): array
+    public function analyze(User $user, ?array $settings = null, ?CarbonInterface $from = null, ?CarbonInterface $to = null): array
     {
         $this->settings = $settings ?? [];
-        $metrics = $this->digest($this->loadOpportunities($user));
+        $metrics = $this->digest($this->opportunitiesInRange($this->loadOpportunities($user), $from, $to));
 
         return [
             'generated_at' => now()->toIso8601String(),
@@ -68,6 +71,20 @@ class OpportunityAnalytics
             ->when(! $user->isAdmin(), fn ($query) => $query->whereIn('assigned_to_id', $user->visibleUserIds()))
             ->latest()
             ->get();
+    }
+
+    /**
+     * Restrict opportunities to a created-at window, when one is given.
+     */
+    private function opportunitiesInRange(Collection $opportunities, ?CarbonInterface $from, ?CarbonInterface $to): Collection
+    {
+        if ($from === null && $to === null) {
+            return $opportunities;
+        }
+
+        return $opportunities->filter(fn (Opportunity $opportunity) => $opportunity->created_at
+            && ($from === null || $opportunity->created_at->gte($from->startOfDay()))
+            && ($to === null || $opportunity->created_at->lte($to->endOfDay())));
     }
 
     /**

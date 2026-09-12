@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActionSuggestionController;
+use App\Http\Controllers\AiReportController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ClientController;
@@ -115,6 +116,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('action-suggestions', [ActionSuggestionController::class, 'index']);
     Route::get('action-suggestions/settings', [ActionSuggestionController::class, 'settings']);
     Route::put('action-suggestions/settings', [ActionSuggestionController::class, 'updateSettings']);
+
+    Route::apiResource('ai-reports', AiReportController::class)
+        ->only(['index', 'store', 'destroy']);
 
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);

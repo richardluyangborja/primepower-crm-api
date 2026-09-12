@@ -6,6 +6,7 @@ use App\Enums\ClientSurveyStatus;
 use App\Models\Client;
 use App\Models\ClientSurvey;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
 /**
@@ -33,14 +34,16 @@ class SatisfactionAnalytics
      * Analyze satisfaction as the user can see it.
      *
      * @param  array<string, string|int|float>|null  $settings  Threshold overrides from action_suggestion_settings
+     * @param  CarbonInterface|null  $from  Optional survey created-at window lower bound.
+     * @param  CarbonInterface|null  $to  Optional survey created-at window upper bound.
      * @return array{generated_at: string, empty: bool, metrics: array, suggested_actions: array}
      */
-    public function analyze(User $user, ?array $settings = null): array
+    public function analyze(User $user, ?array $settings = null, ?CarbonInterface $from = null, ?CarbonInterface $to = null): array
     {
         $this->settings = $settings ?? [];
         $clients = $this->loadClients($user);
 
-        $surveys = $clients->flatMap->surveys;
+        $surveys = $this->surveysInRange($clients->flatMap->surveys, $from, $to);
         $completed = $surveys->where('status', ClientSurveyStatus::COMPLETED);
         $pending = $surveys->where('status', ClientSurveyStatus::PENDING);
 
@@ -82,6 +85,20 @@ class SatisfactionAnalytics
             ->when(! $user->isAdmin(), fn ($query) => $query->whereIn('assigned_to_id', $user->visibleUserIds()))
             ->latest()
             ->get();
+    }
+
+    /**
+     * Restrict surveys to a created-at window, when one is given.
+     */
+    private function surveysInRange(Collection $surveys, ?CarbonInterface $from, ?CarbonInterface $to): Collection
+    {
+        if ($from === null && $to === null) {
+            return $surveys;
+        }
+
+        return $surveys->filter(fn (ClientSurvey $survey) => $survey->created_at
+            && ($from === null || $survey->created_at->gte($from->startOfDay()))
+            && ($to === null || $survey->created_at->lte($to->endOfDay())));
     }
 
     /**
