@@ -19,7 +19,11 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174', 'https://crm-frontend-primepower.hostforgeplatforms.com'],
+    'allowed_origins' => array_values(array_unique(array_filter(array_merge(
+        ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174', 'https://crm-frontend-primepower.hostforgeplatforms.com', 'https://crm.primepowersystem.com'],
+        env('FRONTEND_URL') ? [rtrim((string) env('FRONTEND_URL'), '/')] : [],
+        array_map('trim', explode(',', (string) env('CORS_ALLOWED_ORIGINS', '')))
+    )))),
 
     'allowed_origins_patterns' => [],
 
