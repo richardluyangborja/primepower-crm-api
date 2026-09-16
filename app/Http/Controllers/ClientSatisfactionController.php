@@ -111,7 +111,7 @@ class ClientSatisfactionController extends Controller
             ],
         ]);
 
-        $frontendUrl = config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:5173'));
+        $frontendUrl = config('app.frontend_url');
 
         return response()->json([
             'data' => [

@@ -21,6 +21,7 @@ class ClientSurveyResource extends JsonResource
             'respondent_name' => $this->respondent_name,
             'respondent_position' => $this->respondent_position,
             'feedback' => $this->feedback,
+            'link' => config('app.frontend_url').'/survey/'.$this->token,
         ];
     }
 }
