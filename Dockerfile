@@ -5,7 +5,7 @@
 # Expects all config via environment (see .env.example); never bake a .env in.
 
 # ---------- Stage 1: backend Vite assets (welcome view, etc.) ----------
-FROM node:22-alpine AS assets
+FROM node:22-slim AS assets
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci --no-audit --no-fund
@@ -38,7 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_pgsql pgsql zip intl gd bcmath pcntl opcache \
     && a2enmod rewrite headers \
-    && sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/000-default.conf \
+    && sed -ri "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/000-default.conf \
     && rm -rf /var/lib/apt/lists/*
 
 # Opcache tuned for Laravel prod.
