@@ -25,7 +25,7 @@ class ClientController extends Controller
         $clients = $this->scopeVisibleTo($user, Client::query())
             ->with(['company.primaryContact', 'assignedTo', 'surveys'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
-            ->when($request->filled('assigned_to_id'), fn ($q) => $q->where('assigned_to_id', $request->integer('assigned_to_id')))
+            ->when($request->filled('assigned_to_id'), fn ($q) => $q->where('assigned_to_id', $request->string('assigned_to_id')->toString()))
             ->when($request->filled('industry'), function ($q) use ($request) {
                 $q->whereHas('company', fn ($c) => $c->where('industry', $request->string('industry')));
             })

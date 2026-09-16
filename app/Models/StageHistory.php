@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class StageHistory extends Model
 {
+    use HasUuids;
+
     protected $fillable = [
         'opportunity_id',
         'user_id',

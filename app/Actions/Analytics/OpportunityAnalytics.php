@@ -253,7 +253,7 @@ class OpportunityAnalytics
         return array_slice($actions, 0, $actionCap);
     }
 
-    private function action(string $type, ?string $title, string $suggest, string $reason, ?int $id = null, float $value = 0.0): array
+    private function action(string $type, ?string $title, string $suggest, string $reason, ?string $id = null, float $value = 0.0): array
     {
         return [
             'type' => $type,

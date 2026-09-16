@@ -18,7 +18,7 @@ class UpdateClientRequest extends FormRequest
         return [
             'assigned_to_id' => [
                 'sometimes',
-                'integer',
+                'string', 'uuid',
                 'exists:users,id',
             ],
 

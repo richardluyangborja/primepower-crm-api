@@ -24,7 +24,7 @@ class AuditLogController extends Controller
         }
 
         if ($request->filled('actor_id')) {
-            $query->where('actor_id', $request->integer('actor_id'));
+            $query->where('actor_id', $request->string('actor_id')->toString());
         }
 
         if ($request->filled('actor')) {

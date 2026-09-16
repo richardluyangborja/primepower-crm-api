@@ -22,9 +22,9 @@ class UpdateReminderRequest extends FormRequest
             'priority' => ['sometimes', Rule::enum(ReminderPriority::class)],
             'status' => ['sometimes', 'string', Rule::in(['pending', 'completed', 'incomplete'])],
             'assigned_to_name' => ['nullable', 'string', 'max:255'],
-            'company_id' => ['nullable', 'integer', 'exists:companies,id'],
+            'company_id' => ['nullable', 'string', 'uuid', 'exists:companies,id'],
             'related_to_type' => ['nullable', 'string', 'max:255'],
-            'related_to_id' => ['nullable', 'integer'],
+            'related_to_id' => ['nullable', 'string', 'uuid'],
             'recurrence_rule' => ['nullable', 'string', Rule::in(['daily', 'weekly', 'monthly'])],
         ];
     }

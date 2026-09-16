@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('audit_logs', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
 
             // Actor (the user who performed the action) - stored as strings only
             // so the history is preserved even if the user record is changed/deleted.

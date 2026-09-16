@@ -12,13 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('clients', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
 
-            $table->foreignId('company_id')
+            $table->foreignUuid('company_id')
                 ->constrained()
                 ->restrictOnDelete();
 
-            $table->foreignId('assigned_to_id')
+            $table->foreignUuid('assigned_to_id')
                 ->constrained('users')
                 ->restrictOnDelete();
 

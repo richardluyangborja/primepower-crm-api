@@ -11,8 +11,8 @@ class AiReportResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'type' => $this->type->value,
-            'type_label' => $this->type->label(),
+            'type' => $this->type?->value ?? 'business_health',
+            'type_label' => $this->type?->label() ?? 'Business Health Report',
             'date_range' => $this->date_range,
             'from_date' => $this->from_date?->toDateString(),
             'to_date' => $this->to_date?->toDateString(),

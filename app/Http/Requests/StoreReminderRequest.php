@@ -16,9 +16,9 @@ class StoreReminderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'company_id' => ['required', 'integer', 'exists:companies,id'],
+            'company_id' => ['required', 'string', 'uuid', 'exists:companies,id'],
             'related_to_type' => ['required', Rule::in(['lead', 'client', 'opportunity'])],
-            'related_to_id' => ['required', 'integer'],
+            'related_to_id' => ['required', 'string', 'uuid'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
             'due_date' => ['required', 'date', 'after_or_equal:today'],

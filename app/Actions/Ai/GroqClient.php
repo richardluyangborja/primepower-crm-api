@@ -7,23 +7,31 @@ use Illuminate\Support\Facades\Http;
 class GroqClient
 {
     /**
-     * Send a composed prompt to the Groq AI service and return the generated text.
+     * Send a chat completion to Groq and return the assistant's text.
      *
-     * @param  string  $prompt  The report/action-suggestion prompt authored by Laravel.
-     * @param  string|null  $system  Optional system instruction; falls back to the service default.
+     * @param  string  $prompt  The report prompt authored by Laravel.
+     * @param  string|null  $system  Optional system instruction.
      */
     public function generate(string $prompt, ?string $system = null): string
     {
-        $response = Http::baseUrl(config('groq.service_url'))
+        $messages = [
+            ['role' => 'user', 'content' => $prompt],
+        ];
+
+        if ($system !== null) {
+            array_unshift($messages, ['role' => 'system', 'content' => $system]);
+        }
+
+        $response = Http::withToken(config('groq.api_key'))
             ->acceptJson()
             ->timeout(config('groq.timeout', 120))
-            ->post('/generate', [
-                'prompt' => $prompt,
-                'system' => $system,
+            ->post(config('groq.url'), [
+                'messages' => $messages,
+                'model' => config('groq.model'),
             ]);
 
         $response->throw();
 
-        return $response->json('text');
+        return $response->json('choices.0.message.content', '');
     }
 }

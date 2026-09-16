@@ -79,7 +79,7 @@ class ClientSatisfactionController extends Controller
         $this->authorize('update', $client);
 
         $validated = $request->validate([
-            'template_id' => ['nullable', 'integer', Rule::exists('survey_templates', 'id')],
+            'template_id' => ['nullable', 'string', 'uuid', Rule::exists('survey_templates', 'id')],
         ]);
 
         $templateVersion = null;

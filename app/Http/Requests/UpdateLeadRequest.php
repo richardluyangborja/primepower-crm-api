@@ -18,13 +18,13 @@ class UpdateLeadRequest extends FormRequest
         return [
             'company_id' => [
                 'sometimes',
-                'integer',
+                'string', 'uuid',
                 'exists:companies,id',
             ],
 
             'assigned_to_id' => [
                 'sometimes',
-                'integer',
+                'string', 'uuid',
                 'exists:users,id',
             ],
 

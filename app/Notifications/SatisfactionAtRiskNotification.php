@@ -13,7 +13,7 @@ class SatisfactionAtRiskNotification extends Notification
     public function __construct(
         public string $title,
         public string $message,
-        public int $clientId,
+        public string $clientId,
     ) {}
 
     public function via(object $notifiable): array

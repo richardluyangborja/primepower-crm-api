@@ -76,7 +76,7 @@ class RepPerformanceAnalytics
         ];
     }
 
-    private function averageScore(int $repId, ?CarbonInterface $from, ?CarbonInterface $to): ?float
+    private function averageScore(string $repId, ?CarbonInterface $from, ?CarbonInterface $to): ?float
     {
         $query = ClientSurvey::query()
             ->join('clients', 'client_surveys.client_id', '=', 'clients.id')

@@ -5,11 +5,13 @@ namespace App\Models;
 use App\Enums\CommunicationDirection;
 use App\Enums\CommunicationOutcome;
 use App\Enums\CommunicationType;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Communication extends Model
 {
+    use HasUuids;
     use SoftDeletes;
 
     protected $fillable = [

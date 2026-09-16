@@ -18,20 +18,20 @@ class UpdateOpportunityRequest extends FormRequest
         return [
             'company_id' => [
                 'sometimes',
-                'integer',
+                'string', 'uuid',
                 'exists:companies,id',
             ],
 
             'lead_id' => [
                 'sometimes',
                 'nullable',
-                'integer',
+                'string', 'uuid',
                 'exists:leads,id',
             ],
 
             'assigned_to_id' => [
                 'sometimes',
-                'integer',
+                'string', 'uuid',
                 'exists:users,id',
             ],
 

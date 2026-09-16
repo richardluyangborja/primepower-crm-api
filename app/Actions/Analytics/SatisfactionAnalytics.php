@@ -255,7 +255,7 @@ class SatisfactionAnalytics
         return array_slice($actions, 0, $actionCap);
     }
 
-    private function action(string $type, ?string $title, string $suggest, string $reason, ?int $id = null, string $company = ''): array
+    private function action(string $type, ?string $title, string $suggest, string $reason, ?string $id = null, string $company = ''): array
     {
         return [
             'type' => $type,

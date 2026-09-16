@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ReminderPriority;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Reminder extends Model
 {
+    use HasUuids;
+
     protected $fillable = [
         'company_id',
         'related_to_type',

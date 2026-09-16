@@ -25,7 +25,7 @@ class DashboardResource extends JsonResource
     public function toArray(Request $request): array
     {
         $user = $request->user();
-        $repId = $request->integer('rep_id') ?: null;
+        $repId = $request->string('rep_id')->toString() ?: null;
         $from = $request->filled('from') ? $request->date('from') : null;
         $to = $request->filled('to') ? $request->date('to') : null;
 
@@ -51,7 +51,7 @@ class DashboardResource extends JsonResource
         ];
     }
 
-    private function buildScope(?User $user, ?int $repId, string $column = 'assigned_to_id', bool $includeUnassigned = false): \Closure
+    private function buildScope(?User $user, ?string $repId, string $column = 'assigned_to_id', bool $includeUnassigned = false): \Closure
     {
         return function (Builder $query) use ($user, $repId, $column, $includeUnassigned) {
             if (! $user) {
@@ -439,7 +439,7 @@ class DashboardResource extends JsonResource
         ];
     }
 
-    private function satisfaction(\Closure $scope, ?int $repId): array
+    private function satisfaction(\Closure $scope, ?string $repId): array
     {
         $query = Client::query()->with('surveys');
         $scope($query);
@@ -573,7 +573,7 @@ class DashboardResource extends JsonResource
         return $byQuestion;
     }
 
-    private function satisfactionPerRep(?int $repId): array
+    private function satisfactionPerRep(?string $repId): array
     {
         $query = Client::query()
             ->join('client_surveys', 'clients.id', '=', 'client_surveys.client_id')
@@ -632,7 +632,7 @@ class DashboardResource extends JsonResource
     /**
      * Build the KPI row for a single sales rep (open pipeline + satisfaction).
      */
-    private function repPerformanceRow(int $repId, string $repName): array
+    private function repPerformanceRow(string $repId, string $repName): array
     {
         $oppQuery = Opportunity::query()->where('assigned_to_id', $repId);
         $total = (clone $oppQuery)->count();
@@ -663,7 +663,7 @@ class DashboardResource extends JsonResource
     /**
      * Average score across the rep's completed surveys, or null when none.
      */
-    private function repAverageScore(int $repId): ?float
+    private function repAverageScore(string $repId): ?float
     {
         $avg = ClientSurvey::query()
             ->join('clients', 'client_surveys.client_id', '=', 'clients.id')

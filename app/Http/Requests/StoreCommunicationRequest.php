@@ -20,25 +20,25 @@ class StoreCommunicationRequest extends FormRequest
         return [
             'company_id' => [
                 'required',
-                'integer',
+                'string', 'uuid',
                 'exists:companies,id',
             ],
 
             'contact_id' => [
                 'nullable',
-                'integer',
+                'string', 'uuid',
                 'exists:contacts,id',
             ],
 
             'lead_id' => [
                 'nullable',
-                'integer',
+                'string', 'uuid',
                 'exists:leads,id',
             ],
 
             'client_id' => [
                 'nullable',
-                'integer',
+                'string', 'uuid',
                 'exists:clients,id',
             ],
 

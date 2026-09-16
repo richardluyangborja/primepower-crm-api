@@ -81,7 +81,7 @@ class AiReportController extends Controller
     {
         $this->authorize('delete', $ai_report);
 
-        $label = $ai_report->type->label();
+        $label = $ai_report->type?->label() ?? 'Business Health Report';
         $id = $ai_report->id;
         $ai_report->delete();
 

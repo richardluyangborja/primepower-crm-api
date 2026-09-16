@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Enums\LeadStatus;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Lead extends Model
 {
+    use HasUuids;
+
     protected $fillable = [
         'company_id',
         'assigned_to_id',

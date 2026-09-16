@@ -9,13 +9,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('client_status_histories', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
 
-            $table->foreignId('client_id')
+            $table->foreignUuid('client_id')
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->foreignId('user_id')
+            $table->foreignUuid('user_id')
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete();

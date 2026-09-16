@@ -4,11 +4,12 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * @property int $id
+ * @property string $id
  * @property string|null $actor_name
  * @property string|null $actor_email
  * @property string|null $actor_role
@@ -35,6 +36,8 @@ use Illuminate\Support\Facades\Auth;
 ])]
 class AuditLog extends Model
 {
+    use HasUuids;
+
     protected $casts = [
         'metadata' => 'array',
     ];

@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-function makeLeadFor(int $assignedToId): Lead
+function makeLeadFor(string $assignedToId): Lead
 {
     $company = Company::create([
         'name' => 'Acme Co '.uniqid(),

@@ -14,7 +14,7 @@ class ReminderPolicy extends BasePolicy
 
     public function view(User $user, Reminder $reminder): bool
     {
-        return $this->canSeeOwner($user, $reminder->user_id ?? 0);
+        return $this->canSeeOwner($user, $reminder->user_id ?? '');
     }
 
     public function create(User $user): bool

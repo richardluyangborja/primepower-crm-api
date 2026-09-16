@@ -18,19 +18,19 @@ class StoreOpportunityRequest extends FormRequest
         return [
             'company_id' => [
                 'required',
-                'integer',
+                'string', 'uuid',
                 'exists:companies,id',
             ],
 
             'lead_id' => [
                 'nullable',
-                'integer',
+                'string', 'uuid',
                 'exists:leads,id',
                 function ($attribute, $value, $fail) {
                     if ($value) {
                         $lead = Lead::find($value);
 
-                        if ($lead && $lead->company_id !== (int) $this->input('company_id')) {
+                        if ($lead && $lead->company_id !== (string) $this->input('company_id')) {
                             $fail('The selected lead does not belong to the selected company.');
                         }
                     }
@@ -39,13 +39,13 @@ class StoreOpportunityRequest extends FormRequest
 
             'client_id' => [
                 'nullable',
-                'integer',
+                'string', 'uuid',
                 'exists:clients,id',
                 function ($attribute, $value, $fail) {
                     if ($value) {
                         $client = Client::find($value);
 
-                        if ($client && $client->company_id !== (int) $this->input('company_id')) {
+                        if ($client && $client->company_id !== (string) $this->input('company_id')) {
                             $fail('The selected client does not belong to the selected company.');
                         }
                     }
@@ -54,7 +54,7 @@ class StoreOpportunityRequest extends FormRequest
 
             'assigned_to_id' => [
                 'nullable',
-                'integer',
+                'string', 'uuid',
                 'exists:users,id',
             ],
 

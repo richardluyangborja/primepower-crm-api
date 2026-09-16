@@ -22,7 +22,7 @@ abstract class BasePolicy
         return in_array($user->role, [UserRole::ADMIN, UserRole::MANAGER], true);
     }
 
-    protected function canSeeOwner(User $user, int $ownerId): bool
+    protected function canSeeOwner(User $user, string $ownerId): bool
     {
         if ($this->isAdmin($user)) {
             return true;

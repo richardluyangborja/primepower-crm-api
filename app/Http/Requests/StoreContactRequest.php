@@ -16,7 +16,7 @@ class StoreContactRequest extends FormRequest
         return [
             'company_id' => [
                 'required',
-                'integer',
+                'string', 'uuid',
                 'exists:companies,id',
             ],
             'first_name' => [

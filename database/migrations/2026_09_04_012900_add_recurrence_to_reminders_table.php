@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('reminders', function (Blueprint $table) {
             $table->string('recurrence_rule')->nullable()->after('notes');
-            $table->foreignId('recurrence_parent_id')->nullable()->after('recurrence_rule')->constrained('reminders')->nullOnDelete();
+            $table->foreignUuid('recurrence_parent_id')->nullable()->after('recurrence_rule')->constrained('reminders')->nullOnDelete();
             $table->index(['recurrence_rule', 'completed_at']);
         });
     }

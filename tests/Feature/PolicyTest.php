@@ -27,7 +27,7 @@ beforeEach(function () {
     $this->otherManager = User::factory()->create(['role' => UserRole::MANAGER, 'email' => 'othermgr@example.com']);
 });
 
-function makeLead(int $assignedToId): Lead
+function makeLead(string $assignedToId): Lead
 {
     $company = Company::create([
         'name' => 'Acme Co '.uniqid(),
@@ -47,7 +47,7 @@ function makeLead(int $assignedToId): Lead
     ]);
 }
 
-function makeClient(int $assignedToId): array
+function makeClient(string $assignedToId): array
 {
     $company = Company::create([
         'name' => 'Client Co '.uniqid(),

@@ -11,11 +11,15 @@ use Illuminate\Support\Facades\Http;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Config::set('groq.service_url', 'http://ai-service.test');
+    Config::set('groq.api_key', 'test-key');
+    Config::set('groq.url', 'https://api.groq.com/openai/v1/chat/completions');
+    Config::set('groq.model', 'openai/gpt-oss-120b');
     Config::set('groq.timeout', 30);
 
     Http::fake([
-        'ai-service.test/generate' => Http::response(['text' => "Executive Summary\nTest report content.\n\nKey Findings\nNothing notable."]),
+        'api.groq.com/openai/v1/chat/completions' => Http::response([
+            'choices' => [['message' => ['content' => "Executive Summary\nTest report content.\n\nKey Findings\nNothing notable."]]],
+        ]),
     ]);
 
     $this->admin = User::factory()->create(['role' => UserRole::ADMIN, 'email' => 'admin.ai@example.com']);
@@ -44,28 +48,28 @@ describe('AI Reports - Authorization', function () {
 
     it('allows admin to generate a report', function () {
         $response = $this->actingAs($this->admin)->postJson('/api/ai-reports', [
-            'type' => 'opportunity',
+            'type' => 'business_health',
             'date_range' => 'this_week',
         ]);
 
         $response->assertCreated();
-        $response->assertJsonPath('data.type', 'opportunity');
-        $response->assertJsonPath('data.type_label', 'Opportunity Report');
+        $response->assertJsonPath('data.type', 'business_health');
+        $response->assertJsonPath('data.type_label', 'Business Health Report');
     });
 
     it('allows manager to generate a report', function () {
         $response = $this->actingAs($this->manager)->postJson('/api/ai-reports', [
-            'type' => 'satisfaction',
+            'type' => 'business_health',
             'date_range' => 'last_month',
         ]);
 
         $response->assertCreated();
-        $response->assertJsonPath('data.type', 'satisfaction');
+        $response->assertJsonPath('data.type', 'business_health');
     });
 
     it('rejects sales rep from generating a report', function () {
         $response = $this->actingAs($this->salesRep)->postJson('/api/ai-reports', [
-            'type' => 'opportunity',
+            'type' => 'business_health',
             'date_range' => 'this_week',
         ]);
 
@@ -75,7 +79,7 @@ describe('AI Reports - Authorization', function () {
     it('allows admin to delete a report', function () {
         $report = AiReport::create([
             'user_id' => $this->admin->id,
-            'type' => 'opportunity',
+            'type' => 'business_health',
             'date_range' => 'this_week',
             'content' => 'Test content.',
         ]);
@@ -89,7 +93,7 @@ describe('AI Reports - Authorization', function () {
     it('rejects manager from deleting a report', function () {
         $report = AiReport::create([
             'user_id' => $this->admin->id,
-            'type' => 'opportunity',
+            'type' => 'business_health',
             'date_range' => 'this_week',
             'content' => 'Test content.',
         ]);
@@ -103,7 +107,7 @@ describe('AI Reports - Authorization', function () {
     it('rejects sales rep from deleting a report', function () {
         $report = AiReport::create([
             'user_id' => $this->admin->id,
-            'type' => 'opportunity',
+            'type' => 'business_health',
             'date_range' => 'this_week',
             'content' => 'Test content.',
         ]);
@@ -134,7 +138,7 @@ describe('AI Reports - Validation', function () {
 
     it('requires date_range field', function () {
         $response = $this->actingAs($this->admin)->postJson('/api/ai-reports', [
-            'type' => 'opportunity',
+            'type' => 'business_health',
         ]);
 
         $response->assertUnprocessable()->assertJsonValidationErrors('date_range');
@@ -142,7 +146,7 @@ describe('AI Reports - Validation', function () {
 
     it('requires from_date and to_date when date_range is custom', function () {
         $response = $this->actingAs($this->admin)->postJson('/api/ai-reports', [
-            'type' => 'opportunity',
+            'type' => 'business_health',
             'date_range' => 'custom',
         ]);
 
@@ -151,7 +155,7 @@ describe('AI Reports - Validation', function () {
 
     it('accepts custom range with valid dates', function () {
         $response = $this->actingAs($this->admin)->postJson('/api/ai-reports', [
-            'type' => 'opportunity',
+            'type' => 'business_health',
             'date_range' => 'custom',
             'from_date' => '2026-09-01',
             'to_date' => '2026-09-11',
@@ -180,7 +184,7 @@ describe('AI Reports - Behavior', function () {
         $before = AuditLog::count();
 
         $this->actingAs($this->admin)->postJson('/api/ai-reports', [
-            'type' => 'opportunity',
+            'type' => 'business_health',
             'date_range' => 'this_week',
         ]);
 
@@ -194,7 +198,7 @@ describe('AI Reports - Behavior', function () {
     it('logs an audit entry on delete', function () {
         $report = AiReport::create([
             'user_id' => $this->admin->id,
-            'type' => 'opportunity',
+            'type' => 'business_health',
             'date_range' => 'this_week',
             'content' => 'Test content.',
         ]);
@@ -212,7 +216,7 @@ describe('AI Reports - Behavior', function () {
 
     it('sends the correct prompt to the AI service', function () {
         $this->actingAs($this->admin)->postJson('/api/ai-reports', [
-            'type' => 'opportunity',
+            'type' => 'business_health',
             'date_range' => 'this_week',
         ]);
 
@@ -227,7 +231,7 @@ describe('AI Reports - Behavior', function () {
         // timestamps and a real ordering check in SQLite.
         $old = new AiReport([
             'user_id' => $this->admin->id,
-            'type' => 'opportunity',
+            'type' => 'business_health',
             'date_range' => 'this_week',
             'content' => 'Old report.',
         ]);
@@ -236,7 +240,7 @@ describe('AI Reports - Behavior', function () {
 
         $new = new AiReport([
             'user_id' => $this->admin->id,
-            'type' => 'satisfaction',
+            'type' => 'business_health',
             'date_range' => 'last_month',
             'content' => 'New report.',
         ]);
@@ -247,7 +251,9 @@ describe('AI Reports - Behavior', function () {
 
         $data = $response->json('data');
         expect($data)->toHaveCount(2);
-        expect($data[0]['type'])->toBe('satisfaction');
-        expect($data[1]['type'])->toBe('opportunity');
+        expect($data[0]['type'])->toBe('business_health');
+        expect($data[1]['type'])->toBe('business_health');
+        expect($data[0]['content'])->toBe('New report.');
+        expect($data[1]['content'])->toBe('Old report.');
     });
 });

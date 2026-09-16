@@ -97,7 +97,7 @@ class SatisfactionReportController extends Controller
 
     private function scopedClients(User $user, Request $request): Collection
     {
-        $repId = $request->integer('rep_id') ?: null;
+        $repId = $request->string('rep_id')->toString() ?: null;
 
         $query = Client::query()
             ->with(['surveys', 'assignedTo']);

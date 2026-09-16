@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('survey_template_versions', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
 
-            $table->foreignId('survey_template_id')
+            $table->foreignUuid('survey_template_id')
                 ->constrained()
                 ->cascadeOnDelete();
 

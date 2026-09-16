@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use App\Enums\ClientStatus;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Client extends Model
 {
+    use HasUuids;
+
     protected $fillable = [
         'company_id',
         'lead_id',

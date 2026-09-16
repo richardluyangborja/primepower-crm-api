@@ -10,14 +10,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reminders', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
 
-            $table->foreignId('company_id')
+            $table->foreignUuid('company_id')
                 ->constrained()
                 ->restrictOnDelete();
 
             $table->string('related_to_type')->default('lead');
-            $table->unsignedBigInteger('related_to_id');
+            $table->uuid('related_to_id');
 
             $table->string('title');
             $table->text('description')->nullable();

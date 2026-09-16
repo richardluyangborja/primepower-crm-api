@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\AuditLog;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -287,6 +288,58 @@ class UserController extends Controller
             fclose($out);
         }, $fileName, [
             'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    public function exportPdf(Request $request): StreamedResponse
+    {
+        $this->authorize('export', User::class);
+
+        $query = User::query()->latest();
+
+        foreach (['role'] as $field) {
+            if ($request->filled($field)) {
+                $query->where($field, $request->input($field));
+            }
+        }
+
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        AuditLog::log([
+            ...AuditLog::actor(),
+            'module' => 'User',
+            'action' => 'Exported PDF',
+            'subject_type' => 'User',
+            'subject_id' => null,
+            'subject_name' => 'PDF export',
+            'description' => 'User PDF export requested.',
+            'metadata' => $request->only(['role', 'is_active']),
+        ]);
+
+        $users = $query->get()->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role instanceof UserRole ? $user->role->value : (string) $user->role,
+                'status' => $user->is_active ? 'Active' : 'Inactive',
+                'created_at' => $user->created_at?->toDateTimeString(),
+            ];
+        });
+
+        $html = view('pdf.users-export', ['users' => $users])->render();
+
+        $pdf = Pdf::loadHtml($html)
+            ->setPaper('a4', 'portrait');
+
+        $fileName = 'users-export-'.now()->format('Ymd-His').'.pdf';
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $fileName, [
+            'Content-Type' => 'application/pdf',
         ]);
     }
 }

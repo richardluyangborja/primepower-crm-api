@@ -90,7 +90,7 @@ class StoreLeadRequest extends FormRequest
 
             'assigned_to_id' => [
                 'required',
-                'integer',
+                'string', 'uuid',
                 Rule::exists('users', 'id')
                     ->where('role', UserRole::SALES_REP->value),
             ],

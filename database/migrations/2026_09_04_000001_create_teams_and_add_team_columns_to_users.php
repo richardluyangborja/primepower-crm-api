@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('teams', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name')->unique();
             $table->text('description')->nullable();
-            $table->foreignId('manager_id')
+            $table->foreignUuid('manager_id')
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete();
@@ -20,12 +20,12 @@ return new class extends Migration
         });
 
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('team_id')
+            $table->foreignUuid('team_id')
                 ->nullable()
                 ->after('role')
                 ->constrained('teams')
                 ->nullOnDelete();
-            $table->foreignId('manager_id')
+            $table->foreignUuid('manager_id')
                 ->nullable()
                 ->after('team_id')
                 ->constrained('users')

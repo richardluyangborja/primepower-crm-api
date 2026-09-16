@@ -4,16 +4,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Groq AI Service
+    | Groq
     |--------------------------------------------------------------------------
     |
-    | A separate minimal Python service (ai-service/) makes Groq text
-    | completions on our behalf. Laravel never holds the Groq API key; it
-    | only POSTs a composed prompt to the service and gets plain text back.
+    | The AI Reports module calls Groq's OpenAI-compatible chat completions
+    | endpoint directly from Laravel. The API key is never committed — set
+    | GROQ_API_KEY in your environment.
     |
     */
 
-    'service_url' => env('AI_SERVICE_URL', 'http://127.0.0.1:8001'),
+    'api_key' => env('GROQ_API_KEY'),
 
-    'timeout' => (int) env('AI_SERVICE_TIMEOUT', 120),
+    'url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1/chat/completions'),
+
+    'model' => env('GROQ_MODEL', 'openai/gpt-oss-120b'),
+
+    'timeout' => (int) env('GROQ_TIMEOUT', 120),
 ];

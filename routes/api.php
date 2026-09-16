@@ -103,6 +103,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('users/{user}/activate', [UserController::class, 'activate']);
     Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword']);
     Route::get('users-export', [UserController::class, 'export']);
+    Route::get('users-export-pdf', [UserController::class, 'exportPdf']);
 
     Route::apiResource('survey-templates', SurveyTemplateController::class)
         ->only(['index', 'store', 'update', 'destroy']);
@@ -114,8 +115,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('analytics/satisfaction', [AnalyticsController::class, 'satisfaction']);
 
     Route::get('action-suggestions', [ActionSuggestionController::class, 'index']);
-    Route::get('action-suggestions/settings', [ActionSuggestionController::class, 'settings']);
-    Route::put('action-suggestions/settings', [ActionSuggestionController::class, 'updateSettings']);
 
     Route::apiResource('ai-reports', AiReportController::class)
         ->only(['index', 'store', 'destroy']);
@@ -124,7 +123,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
     Route::patch('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-    Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
 });
 
 Route::get('surveys/{token}', [PublicSurveyController::class, 'show']);

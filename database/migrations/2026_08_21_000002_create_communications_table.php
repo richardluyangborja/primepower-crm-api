@@ -11,28 +11,28 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('communications', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
 
-            $table->foreignId('company_id')
+            $table->foreignUuid('company_id')
                 ->constrained()
                 ->restrictOnDelete();
 
-            $table->foreignId('lead_id')
+            $table->foreignUuid('lead_id')
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
 
-            $table->foreignId('client_id')
+            $table->foreignUuid('client_id')
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
 
-            $table->foreignId('contact_id')
+            $table->foreignUuid('contact_id')
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
 
-            $table->foreignId('user_id')
+            $table->foreignUuid('user_id')
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete();

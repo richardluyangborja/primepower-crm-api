@@ -25,7 +25,7 @@ function lcdCompany(?string $suffix = null): Company
     ]);
 }
 
-function lcdLeadFor(int $userId, ?string $source = 'Test'): Lead
+function lcdLeadFor(string $userId, ?string $source = 'Test'): Lead
 {
     $company = lcdCompany();
 
@@ -38,7 +38,7 @@ function lcdLeadFor(int $userId, ?string $source = 'Test'): Lead
     ]);
 }
 
-function lcdClientFor(int $userId): Client
+function lcdClientFor(string $userId): Client
 {
     $company = lcdCompany();
 

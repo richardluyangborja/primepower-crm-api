@@ -17,7 +17,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('manager_id')
+            $table->foreignUuid('manager_id')
                 ->nullable()
                 ->after('team_id')
                 ->constrained('users')

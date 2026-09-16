@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('audit_logs', function (Blueprint $table) {
-            $table->foreignId('actor_id')->nullable()->after('actor_role')->constrained('users')->nullOnDelete();
+            $table->foreignUuid('actor_id')->nullable()->after('actor_role')->constrained('users')->nullOnDelete();
             $table->index('actor_id');
             $table->index(['module', 'action']);
             $table->index('created_at');

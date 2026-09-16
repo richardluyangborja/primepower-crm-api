@@ -22,7 +22,6 @@ use App\Models\Reminder;
 use App\Models\StageHistory;
 use App\Models\StatusHistory;
 use App\Models\User;
-use App\Notifications\ReminderDueNotification;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -39,8 +38,8 @@ class CrmSeeder extends Seeder
     {
         // ── Users ────────────────────────────────────────────────
         $admin = User::create([
-            'name' => 'Daniel Balisi',
-            'email' => 'daniel@primepower.com',
+            'name' => 'Admin User',
+            'email' => 'admin@primepower.com',
             'password' => Hash::make('password'),
             'role' => UserRole::ADMIN,
             'is_active' => true,
@@ -94,6 +93,13 @@ class CrmSeeder extends Seeder
             ['name' => 'Pacific Marine Services', 'industry' => 'Maritime', 'address' => 'Cebu City, Cebu', 'phone' => '+63 930 345 6789', 'email' => 'info@pacificmarine.example', 'website' => 'https://pacificmarine.example'],
             ['name' => 'Metro Security Agency', 'industry' => 'Security Services', 'address' => 'Manila, Metro Manila', 'phone' => '+63 931 456 7890', 'email' => 'info@metrosecurity.example', 'website' => 'https://metrosecurity.example'],
             ['name' => 'GreenHarvest Farms', 'industry' => 'Agriculture', 'address' => 'Batangas City, Batangas', 'phone' => '+63 932 567 8901', 'email' => 'info@greenharvest.example', 'website' => 'https://greenharvest.example'],
+            ['name' => 'Luzon Steel Works', 'industry' => 'Manufacturing', 'address' => 'Caloocan City, Metro Manila', 'phone' => '+63 933 678 9012', 'email' => 'info@luzonsteel.example', 'website' => 'https://luzonsteel.example'],
+            ['name' => 'Visayas Food Distributors', 'industry' => 'Food & Beverage', 'address' => 'Iloilo City, Iloilo', 'phone' => '+63 934 789 0123', 'email' => 'info@visayasfood.example', 'website' => 'https://visayasfood.example'],
+            ['name' => 'Mindanao Agri Trading', 'industry' => 'Agriculture', 'address' => 'Davao City, Davao del Sur', 'phone' => '+63 935 890 1234', 'email' => 'info@mindanaoagri.example', 'website' => 'https://mindanaoagri.example'],
+            ['name' => 'Supply Chain Solutions Ltd', 'industry' => 'Logistics', 'address' => 'Pasig City, Metro Manila', 'phone' => '+63 936 567 8901', 'email' => 'info@supplychain.example', 'website' => 'https://supplychain.example'],
+            ['name' => 'IT Systems Integrator Corp', 'industry' => 'Technology', 'address' => 'Quezon City, Metro Manila', 'phone' => '+63 937 678 9012', 'email' => 'info@itsystems.example', 'website' => 'https://itsystems.example'],
+            ['name' => 'Carlos Reyes Company', 'industry' => 'Technology', 'address' => 'Quezon City, Metro Manila', 'phone' => '+63 938 678 9012', 'email' => 'info@carlosreyes.example', 'website' => 'https://carlosreyes.example'],
+            ['name' => 'Anna Lim Company', 'industry' => 'Manufacturing', 'address' => 'Pasig City, Metro Manila', 'phone' => '+63 939 678 9012', 'email' => 'info@annalim.example', 'website' => 'https://annalim.example'],
         ];
 
         $contacts = [
@@ -117,18 +123,34 @@ class CrmSeeder extends Seeder
             ['first_name' => 'Grace', 'last_name' => 'Fernandez', 'title' => 'Network Admin'],
             ['first_name' => 'Rico', 'last_name' => 'Dela Rosa', 'title' => 'Port Captain'],
             ['first_name' => 'Linda', 'last_name' => 'Gonzales', 'title' => 'Security Chief'],
+            ['first_name' => 'Marco', 'last_name' => 'Villanueva', 'title' => 'Plant Supervisor'],
+            ['first_name' => 'Contact', 'last_name' => 'Three', 'title' => 'Contact'],  // Index 23
+            ['first_name' => 'Contact', 'last_name' => 'Four', 'title' => 'Contact'],  // Index 24
+            ['first_name' => 'Contact', 'last_name' => 'Five', 'title' => 'Contact'],  // Index 25
+            ['first_name' => 'Contact', 'last_name' => 'Six', 'title' => 'Contact'],   // Index 26
+            ['first_name' => 'Contact', 'last_name' => 'Seven', 'title' => 'Contact'], // Index 27
+            ['first_name' => 'Contact', 'last_name' => 'Eight', 'title' => 'Contact'], // Index 28
         ];
 
         $sources = ['Referral', 'Website Inquiry', 'Cold Outreach', 'Social Media', 'Trade Show', 'Email Campaign', 'Partner Referral', 'Advertisement'];
 
         $opportunityTitles = [
-            'Production Line Staffing', 'Warehouse Associate Deployment', 'Packaging Line Support',
-            'Seasonal Store Staffing', 'Construction Site Manpower', 'Corporate Office Staffing',
-            'IT Support Deployment', 'Solar Installation Crew', 'Medical Staff Augmentation',
-            'Financial Audit Support', 'Port Operations Crew', 'Farm Workers Deployment',
+            'Production Line Staffing', 'Warehouse Associate Deployment', 'Business Process Optimization',
+            'Customer Service Enhancement', 'Construction Site Manpower', 'Corporate Office Staffing',
+            'IT Support Deployment', 'Solar Installation Crew', 'Supply Chain Improvement',
+            'Technology Infrastructure Review', 'Port Operations Crew', 'Farm Workers Deployment',
             'Hotel Housekeeping Staff', 'Building Maintenance', 'Retail Sales Associates',
             'Bank Tellers Deployment', 'Network Operations Center', 'Marine Crew Staffing',
             'Security Personnel Deployment', 'Field Harvest Workforce',
+            'Steel Plant Manpower', 'Cold Chain Staffing', 'Agri Trading Workforce',
+            'Technology Infrastructure Upgrade',      // 26 - Carlos Reyes
+            'Supply Chain Optimization',           // 27 - Anna Lim
+            'Business Development Initiative',     // 28
+            'Operational Efficiency Project',      // 29
+            'Customer Experience Enhancement',     // 30
+            'Digital Transformation Initiative',   // 31
+            'Supply Chain Resilience Program',     // 32
+            'Quality Improvement Initiative',      // 33
         ];
 
         // ── Lead data ────────────────────────────────────────────
@@ -142,14 +164,14 @@ class CrmSeeder extends Seeder
         $leadData = [
             [LeadStatus::CONVERTED, 240, 215, 185],    // 0  Jan
             [LeadStatus::CONVERTED, 225, 200, 170],    // 1  Jan
-            [LeadStatus::CONVERTED, 205, 180, 150],    // 2  Feb
-            [LeadStatus::CONVERTED, 190, 165, 135],    // 3  Feb
-            [LeadStatus::CONVERTED, 170, 145, 115],    // 4  Mar
+            [LeadStatus::QUALIFIED, 205, 180, null],   // 2  Feb - Carlos Reyes: Qualified, open negotiation
+            [LeadStatus::QUALIFIED, 190, 165, null],   // 3  Feb - Anna Lim: Qualified, open negotiation
+            [LeadStatus::CONVERTED, 205, 180, 150],    // 4  Mar
             [LeadStatus::CONVERTED, 150, 125, 95],     // 5  Apr
             [LeadStatus::CONVERTED, 135, 110, 80],     // 6  Apr
             [LeadStatus::CONVERTED, 115, 90, 60],      // 7  May
-            [LeadStatus::CONVERTED, 95, 70, 40],       // 8  Jun
-            [LeadStatus::CONVERTED, 80, 55, 25],       // 9  Jun
+            [LeadStatus::QUALIFIED, 95, 70, null],     // 8  Jun - Carlos Reyes: Qualified, open negotiation
+            [LeadStatus::QUALIFIED, 70, 50, null],     // 9  Jun - Anna Lim: Qualified, open negotiation
             [LeadStatus::CONVERTED, 150, 130, 120],    // 10 Cebu Shipping — client 120d
             [LeadStatus::CONVERTED, 130, 110, 100],    // 11 Island Resorts — client 100d
             [LeadStatus::CONVERTED, 110, 90, 80],      // 12 National Construction — client 80d
@@ -160,6 +182,13 @@ class CrmSeeder extends Seeder
             [LeadStatus::QUALIFIED, 40, 25, null],     // 17 proposal, closing soon
             [LeadStatus::NEW, 10, null, null],          // 18 fresh inquiry
             [LeadStatus::QUALIFIED, 30, 20, null],     // 19 stalled discussion, no close date
+            [LeadStatus::NEW, 6, null, null],          // 20 Maria — fresh inquiry (Luzon Steel)
+            [LeadStatus::CONVERTED, 70, 50, 30],       // 21 Maria — converted (Visayas Food)
+            [LeadStatus::CONVERTED, 55, 35, 15],       // 22 Maria — converted (Mindanao Agri)
+            [LeadStatus::QUALIFIED, 45, 30, null],     // 23 Carlos Reyes — qualified, open negotiation
+            [LeadStatus::QUALIFIED, 35, 20, null],     // 24 Anna Lim — qualified, open negotiation
+            [LeadStatus::QUALIFIED, 50, 35, null],     // 25 Carlos Reyes — qualified, open negotiation
+            [LeadStatus::QUALIFIED, 40, 25, null],     // 26 Anna Lim — qualified, open negotiation
         ];
 
         // ── Opportunity stages (one per lead) ────────────────────
@@ -169,14 +198,14 @@ class CrmSeeder extends Seeder
         $oppStages = [
             OpportunityStage::WON,               // 0
             OpportunityStage::WON,               // 1
-            OpportunityStage::WON,               // 2
-            OpportunityStage::WON,               // 3
+            OpportunityStage::PROPOSAL,          // 2 - Carlos Reyes: Open proposal
+            OpportunityStage::PROPOSAL,          // 3 - Anna Lim: Open proposal
             OpportunityStage::WON,               // 4
             OpportunityStage::WON,               // 5
             OpportunityStage::WON,               // 6
             OpportunityStage::WON,               // 7
-            OpportunityStage::WON,               // 8
-            OpportunityStage::WON,               // 9
+            OpportunityStage::NEGOTIATION,       // 8 - Carlos Reyes: Open negotiation
+            OpportunityStage::NEGOTIATION,       // 9 - Anna Lim: Open negotiation
             OpportunityStage::WON,               // 10
             OpportunityStage::WON,               // 11
             OpportunityStage::WON,               // 12
@@ -187,6 +216,13 @@ class CrmSeeder extends Seeder
             OpportunityStage::PROPOSAL,          // 17 — closing soon
             OpportunityStage::INITIAL_CONTACT,   // 18 — fresh
             OpportunityStage::DISCUSSION,        // 19 — stalled, no close date
+            OpportunityStage::INITIAL_CONTACT,   // 20 — fresh (Maria lead)
+            OpportunityStage::WON,               // 21 — converted (Maria client)
+            OpportunityStage::WON,               // 22 — converted (Maria client)
+            OpportunityStage::NEGOTIATION,       // 23 — Carlos Reyes — open negotiation
+            OpportunityStage::NEGOTIATION,       // 24 — Anna Lim — open negotiation
+            OpportunityStage::NEGOTIATION,       // 25 — Carlos Reyes — open negotiation
+            OpportunityStage::NEGOTIATION,       // 26 — Anna Lim — open negotiation
         ];
 
         // ── Survey score patterns per client (index = company index) ──
@@ -270,6 +306,54 @@ class CrmSeeder extends Seeder
                 ['scores' => [3, 3, 4, 3], 'days_ago' => 24, 'feedback' => 'Working through kinks.'],
                 ['scores' => [3, 4, 4, 4], 'days_ago' => 3, 'feedback' => 'Much smoother now.'],
             ],
+            // Stable good: 4.0 → 4.3 → 4.5 (Maria client)
+            21 => [
+                ['scores' => [4, 4, 4, 4], 'days_ago' => 28, 'feedback' => 'Solid onboarding experience.'],
+                ['scores' => [4, 4, 5, 4], 'days_ago' => 14, 'feedback' => 'Reliable staffing support.'],
+                ['scores' => [4, 5, 5, 4], 'days_ago' => 3, 'feedback' => 'Very pleased with the team.'],
+            ],
+            // Improving: 3.0 → 3.8 → 4.3 (Maria client)
+            22 => [
+                ['scores' => [3, 3, 3, 3], 'days_ago' => 14, 'feedback' => 'Good start to the engagement.'],
+                ['scores' => [4, 3, 4, 4], 'days_ago' => 7, 'feedback' => 'Noticeable improvement.'],
+                ['scores' => [4, 4, 5, 4], 'days_ago' => 1, 'feedback' => 'Excellent recent support.'],
+            ],
+            // Anna Lim's company - improving trend
+            26 => [
+                ['scores' => [3, 3, 3, 3], 'days_ago' => 40, 'feedback' => 'Decent start.'],
+                ['scores' => [3, 4, 4, 4], 'days_ago' => 18, 'feedback' => 'Improving communication.'],
+                ['scores' => [4, 4, 4, 4], 'days_ago' => 2, 'feedback' => 'Stronger service now.'],
+            ],
+            // Carlos Reyes's company - stable good
+            27 => [
+                ['scores' => [4, 4, 4, 4], 'days_ago' => 28, 'feedback' => 'Solid onboarding experience.'],
+                ['scores' => [4, 4, 5, 4], 'days_ago' => 14, 'feedback' => 'Reliable staffing support.'],
+                ['scores' => [4, 5, 5, 4], 'days_ago' => 3, 'feedback' => 'Very pleased with the team.'],
+            ],
+        ];
+
+        // Extra survey records for companies owned by Maria Santos (indices 0, 6, 12, 21, 22).
+        $mariaExtraSurveys = [
+            0 => [
+                ['scores' => [4, 4, 5, 4], 'days_ago' => 20, 'feedback' => 'Continued good service.'],
+                ['scores' => [5, 4, 4, 5], 'days_ago' => 5, 'feedback' => 'Excellent follow-through.'],
+            ],
+            6 => [
+                ['scores' => [3, 3, 3, 3], 'days_ago' => 12, 'feedback' => 'Stabilizing after a rough patch.'],
+                ['scores' => [3, 4, 3, 4], 'days_ago' => 2, 'feedback' => 'Recovery in progress.'],
+            ],
+            12 => [
+                ['scores' => [4, 4, 4, 5], 'days_ago' => 10, 'feedback' => 'Consistent delivery.'],
+                ['scores' => [4, 5, 4, 4], 'days_ago' => 1, 'feedback' => 'Strong partnership.'],
+            ],
+            21 => [
+                ['scores' => [5, 5, 4, 5], 'days_ago' => 6, 'feedback' => 'Top marks for responsiveness.'],
+                ['scores' => [4, 5, 5, 5], 'days_ago' => 1, 'feedback' => 'Outstanding as always.'],
+            ],
+            22 => [
+                ['scores' => [4, 4, 4, 4], 'days_ago' => 4, 'feedback' => 'Steady and dependable.'],
+                ['scores' => [5, 4, 5, 4], 'days_ago' => 1, 'feedback' => 'Great momentum.'],
+            ],
         ];
 
         // Clients flagged at risk (declining satisfaction).
@@ -317,6 +401,9 @@ class CrmSeeder extends Seeder
             ]);
 
             $assignedTo = $salesReps[$i % count($salesReps)];
+            if ($i >= 20) {
+                $assignedTo = $salesReps[0]; // Maria Santos owns the 3 added companies
+            }
             $source = $sources[$i % count($sources)];
             [$status, $createdDaysAgo, $qualifiedDaysAgo, $resolvedDaysAgo] = $leadData[$i];
 
@@ -360,6 +447,10 @@ class CrmSeeder extends Seeder
                     $this->createSurvey($client, $pattern);
                 }
 
+                foreach ($mariaExtraSurveys[$i] ?? [] as $pattern) {
+                    $this->createSurvey($client, $pattern);
+                }
+
                 if (array_key_exists($i, $pendingSurveyClients)) {
                     $this->createPendingSurvey($client, $pendingSurveyClients[$i]['days_ago']);
                 }
@@ -376,6 +467,7 @@ class CrmSeeder extends Seeder
                 $i === 16 => 25,   // NEGOTIATION — stalled + closing soon
                 $i === 17 => 20,   // PROPOSAL — stalled + closing soon
                 $i === 18 => 1,    // INITIAL_CONTACT — fresh, no flags
+                $i === 20 => 1,    // INITIAL_CONTACT — fresh, no flags (Maria lead)
                 default => 18,     // DISCUSSION — stalled, no close date
             };
 
@@ -392,6 +484,7 @@ class CrmSeeder extends Seeder
                 $i === 17 => now()->addDays(18),
                 // Fresh deal: over a month out
                 $i === 18 => now()->addDays(45),
+                $i === 20 => now()->addDays(45),
                 // Stalled deal with no close date set
                 default => null,
             };
@@ -568,18 +661,13 @@ class CrmSeeder extends Seeder
                     'recurrence_parent_id' => null,
                     'created_at' => now()->subDays(12),
                 ]);
-
-                // Notify a few users so the due-refreshed flow has data
-                if ($i < 3) {
-                    $assignedTo->notify(new ReminderDueNotification($dueReminder));
-                }
             }
         }
     }
 
     private function createStatusHistories(
         Lead $lead,
-        int $userId,
+        string $userId,
         LeadStatus $finalStatus,
         string $source,
         int $createdDaysAgo,
@@ -623,7 +711,7 @@ class CrmSeeder extends Seeder
         OpportunityStage::WON,
     ];
 
-    private function createStageHistoriesForOpportunity(Opportunity $opportunity, int $userId, OpportunityStage $finalStage, int $oppCreatedDaysAgo, ?int $currentStageDaysAgo): void
+    private function createStageHistoriesForOpportunity(Opportunity $opportunity, string $userId, OpportunityStage $finalStage, int $oppCreatedDaysAgo, ?int $currentStageDaysAgo): void
     {
         if ($currentStageDaysAgo !== null) {
             // Open deals: pin the current-stage entry so "stalled" rules fire.
@@ -643,7 +731,7 @@ class CrmSeeder extends Seeder
         $this->createEvenStageChain($opportunity, $userId, $finalStage, $oppCreatedDaysAgo);
     }
 
-    private function createPinnedStageChain(Opportunity $opportunity, int $userId, OpportunityStage $finalStage, int $currentStageDaysAgo): void
+    private function createPinnedStageChain(Opportunity $opportunity, string $userId, OpportunityStage $finalStage, int $currentStageDaysAgo): void
     {
         $stageIndex = $this->stageIndex($finalStage);
         $previousStage = null;
@@ -665,7 +753,7 @@ class CrmSeeder extends Seeder
         }
     }
 
-    private function createEvenStageChain(Opportunity $opportunity, int $userId, OpportunityStage $finalStage, int $oppCreatedDaysAgo): void
+    private function createEvenStageChain(Opportunity $opportunity, string $userId, OpportunityStage $finalStage, int $oppCreatedDaysAgo): void
     {
         $stageIndex = $this->stageIndex($finalStage);
         $previousStage = null;
@@ -707,7 +795,7 @@ class CrmSeeder extends Seeder
         };
     }
 
-    private function createStageEntry(Opportunity $opportunity, int $userId, ?string $fromStage, OpportunityStage $toStage, string $reason, \DateTimeInterface $createdAt): void
+    private function createStageEntry(Opportunity $opportunity, string $userId, ?string $fromStage, OpportunityStage $toStage, string $reason, \DateTimeInterface $createdAt): void
     {
         StageHistory::create([
             'opportunity_id' => $opportunity->id,

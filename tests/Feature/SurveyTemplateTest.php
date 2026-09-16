@@ -219,6 +219,7 @@ it('snapshots the current template version when creating a survey with template_
     ])->assertOk();
 
     $surveys = $client->surveys()->orderBy('id')->get();
-    expect($surveys->first()->template_version_id)->toBe(1); // old version
-    expect($surveys->last()->template_version_id)->toBe(2); // new version
+    $versionIds = $template->versions()->reorder()->orderBy('version')->pluck('id');
+    expect($surveys->first()->template_version_id)->toBe($versionIds->first()); // old version
+    expect($surveys->last()->template_version_id)->toBe($versionIds->last()); // new version
 });

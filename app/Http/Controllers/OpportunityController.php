@@ -25,7 +25,7 @@ class OpportunityController extends Controller
         $opportunities = $this->scopeVisibleTo($user, Opportunity::query())
             ->with(['company', 'assignedTo'])
             ->when($request->filled('stage'), fn ($q) => $q->where('stage', $request->string('stage')))
-            ->when($request->filled('assigned_to_id'), fn ($q) => $q->where('assigned_to_id', $request->integer('assigned_to_id')))
+            ->when($request->filled('assigned_to_id'), fn ($q) => $q->where('assigned_to_id', $request->string('assigned_to_id')->toString()))
             ->when($request->filled('value_min'), fn ($q) => $q->where('estimated_contract_value', '>=', $request->integer('value_min')))
             ->when($request->filled('value_max'), fn ($q) => $q->where('estimated_contract_value', '<=', $request->integer('value_max')))
             ->when($request->filled('expected_close_from'), fn ($q) => $q->whereDate('expected_close_date', '>=', $request->date('expected_close_from')))

@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Reminder;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
@@ -42,7 +43,7 @@ function makeReminder(User $user, Company $company, array $overrides = []): Remi
     return Reminder::create(array_merge([
         'company_id' => $company->id,
         'related_to_type' => 'lead',
-        'related_to_id' => 1,
+        'related_to_id' => (string) Str::uuid(),
         'title' => 'Call back',
         'description' => 'Discuss proposal',
         'due_date' => now()->addDay()->toDateString(),
@@ -59,7 +60,7 @@ it('lets a rep create a recurring reminder', function () {
     $response = $this->actingAs($rep)->postJson('/api/reminders', [
         'company_id' => $company->id,
         'related_to_type' => 'lead',
-        'related_to_id' => 1,
+        'related_to_id' => (string) Str::uuid(),
         'title' => 'Weekly check-in',
         'due_date' => now()->addWeek()->toDateString(),
         'priority' => ReminderPriority::MEDIUM->value,
@@ -78,7 +79,7 @@ it('rejects invalid recurrence rules', function () {
     $this->actingAs($rep)->postJson('/api/reminders', [
         'company_id' => $company->id,
         'related_to_type' => 'lead',
-        'related_to_id' => 1,
+        'related_to_id' => (string) Str::uuid(),
         'title' => 'Bad',
         'due_date' => now()->addDay()->toDateString(),
         'priority' => ReminderPriority::LOW->value,
@@ -133,52 +134,49 @@ it('blocks a rep from deleting another reps reminder', function () {
     expect(Reminder::find($reminder->id))->not->toBeNull();
 });
 
-it('sends due reminder notifications via the artisan command', function () {
+it('lists overdue reminders in the notifications feed without any scheduler run', function () {
     [$manager, $rep, $other, $company] = seedReminderActor();
     $due = makeReminder($rep, $company, [
-        'due_date' => now()->toDateString(),
+        'due_date' => now()->subDay()->toDateString(),
         'is_completed' => false,
     ]);
     $future = makeReminder($rep, $company, [
         'due_date' => now()->addDays(5)->toDateString(),
     ]);
 
-    $this->artisan('reminders:send-due --days=1')->assertSuccessful();
+    $data = $this->actingAs($rep)->getJson('/api/notifications')->assertOk()->json('data');
 
-    expect($rep->notifications()->count())->toBe(1);
-    expect($rep->notifications()->first()->data['reminder_id'])->toBe($due->id);
-    expect($rep->notifications()->where('data->reminder_id', $future->id)->exists())->toBeFalse();
+    expect($data)->toHaveCount(1);
+    expect($data[0]['reminder_id'])->toBe($due->id);
+    expect(collect($data)->pluck('reminder_id')->contains($future->id))->toBeFalse();
 });
 
-it('does not double-notify for the same reminder', function () {
+it('does not duplicate feed entries for the same reminder', function () {
     [$manager, $rep, $other, $company] = seedReminderActor();
-    makeReminder($rep, $company, ['due_date' => now()->toDateString()]);
+    makeReminder($rep, $company, ['due_date' => now()->subDay()->toDateString()]);
 
-    $this->artisan('reminders:send-due --days=1')->assertSuccessful();
-    $this->artisan('reminders:send-due --days=1')->assertSuccessful();
+    $first = $this->actingAs($rep)->getJson('/api/notifications')->json('data');
+    $second = $this->actingAs($rep)->getJson('/api/notifications')->json('data');
 
-    expect($rep->notifications()->count())->toBe(1);
+    expect($first)->toHaveCount(1);
+    expect($second)->toHaveCount(1);
 });
 
 it('marks notifications as read via the api', function () {
     [$manager, $rep, $other, $company] = seedReminderActor();
-    makeReminder($rep, $company, ['due_date' => now()->toDateString()]);
+    $reminder = makeReminder($rep, $company, ['due_date' => now()->subDay()->toDateString()]);
 
-    $this->artisan('reminders:send-due --days=1')->assertSuccessful();
+    $response = $this->actingAs($rep)->patchJson("/api/notifications/{$reminder->id}/read");
 
-    $notification = $rep->notifications()->first();
+    $response->assertOk()->assertJsonPath('data.id', (string) $reminder->id);
+    expect($response->json('data.read_at'))->not->toBeNull();
 
-    $this->actingAs($rep)->patchJson("/api/notifications/{$notification->id}/read")
-        ->assertOk()
-        ->assertJsonPath('data.id', $notification->id);
-
-    expect($notification->fresh()->read_at)->not->toBeNull();
+    expect($this->actingAs($rep)->getJson('/api/notifications/unread-count')->json('count'))->toBe(0);
 });
 
 it('returns the unread count', function () {
     [$manager, $rep, $other, $company] = seedReminderActor();
-    makeReminder($rep, $company, ['due_date' => now()->toDateString()]);
-    $this->artisan('reminders:send-due --days=1')->assertSuccessful();
+    makeReminder($rep, $company, ['due_date' => now()->subDay()->toDateString()]);
 
     $this->actingAs($rep)->getJson('/api/notifications/unread-count')
         ->assertOk()

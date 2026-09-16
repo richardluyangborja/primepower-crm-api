@@ -18,7 +18,7 @@ class ReassignRequest extends FormRequest
         return [
             'assigned_to_id' => [
                 'required',
-                'integer',
+                'string', 'uuid',
                 Rule::exists('users', 'id')->where('role', UserRole::SALES_REP->value),
             ],
             'note' => ['nullable', 'string', 'max:5000'],

@@ -6,7 +6,7 @@ use App\Actions\Analytics\OpportunityAnalytics;
 use App\Actions\Analytics\RepPerformanceAnalytics;
 use App\Actions\Analytics\SatisfactionAnalytics;
 use App\Enums\AiReportType;
-use App\Models\ActionSuggestionSetting;
+use App\Http\Controllers\ActionSuggestionController;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
@@ -55,16 +55,23 @@ TXT;
      */
     public function compose(AiReportType $type, User $user, ?CarbonInterface $from = null, ?CarbonInterface $to = null): array
     {
-        $this->settings = collect(ActionSuggestionSetting::pluck('value', 'key')->all());
+        $this->settings = collect(ActionSuggestionController::DEFAULT_SETTINGS);
 
         return [
             'system' => self::SYSTEM_MESSAGE,
             'prompt' => match ($type) {
-                AiReportType::OPPORTUNITY => $this->opportunityPrompt($user, $from, $to),
-                AiReportType::SATISFACTION => $this->satisfactionPrompt($user, $from, $to),
+                AiReportType::BUSINESS_HEALTH => $this->businessHealthPrompt($user, $from, $to),
                 AiReportType::REP_PERFORMANCE => $this->repPerformancePrompt($user, $from, $to),
             },
         ];
+    }
+
+    private function businessHealthPrompt(User $user, ?CarbonInterface $from, ?CarbonInterface $to): string
+    {
+        return implode(PHP_EOL.PHP_EOL, [
+            $this->opportunityPrompt($user, $from, $to),
+            $this->satisfactionPrompt($user, $from, $to),
+        ]);
     }
 
     private function opportunityPrompt(User $user, ?CarbonInterface $from, ?CarbonInterface $to): string

@@ -30,7 +30,7 @@ class ReminderController extends Controller
             })
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->string('priority')))
-            ->when($request->filled('user_id'), fn ($q) => $q->where('user_id', $request->integer('user_id')))
+            ->when($request->filled('user_id'), fn ($q) => $q->where('user_id', $request->string('user_id')->toString()))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('due_date', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($q) => $q->whereDate('due_date', '<=', $request->date('to')))
             ->when($request->filled('overdue') && $request->boolean('overdue'), function ($q) {
