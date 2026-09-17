@@ -40,6 +40,12 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
 
+        // Login is owned by the email OTP flow (EmailOtpController:
+        // password check → Gmail code → session). Always failing here
+        // keeps Fortify's password-only /api/login from bypassing the
+        // verification-code step.
+        Fortify::authenticateUsing(fn () => null);
+
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 

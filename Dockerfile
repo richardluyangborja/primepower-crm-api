@@ -52,6 +52,14 @@ RUN { \
 WORKDIR /var/www/html
 
 # Application code (excludes dev files via .dockerignore).
+# Single-artifact note: backend + frontend are separate repos, so this image
+# cannot build ../front. Instead, sync the SPA into backend/public/ BEFORE
+# `docker build` (from repo root):
+#   cd front && npm ci && VITE_API_URL= npm run build
+#   ./backend/scripts/sync-frontend.sh
+# That places public/index.html + public/assets/ here, and the COPY below
+# picks them up. Apache serves them directly; Laravel's fallback route covers
+# SPA deep-links (/login, /survey/{token}).
 COPY --chown=www-data:www-data . .
 COPY --from=vendor --chown=www-data:www-data /app/vendor ./vendor
 COPY --from=assets --chown=www-data:www-data /app/public/build ./public/build

@@ -32,6 +32,9 @@ Route::get('/me', function () {
     return Auth::check();
 });
 
+// Email OTP two-factor login lives in routes/web.php (same single-`web`-
+// stack pattern Fortify uses) — see note there.
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('leads/mine', [LeadController::class, 'mine']);
     Route::get('leads/sources', [LeadController::class, 'sources']);

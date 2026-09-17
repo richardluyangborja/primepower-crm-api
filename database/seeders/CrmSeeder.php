@@ -38,8 +38,8 @@ class CrmSeeder extends Seeder
     {
         // ── Users ────────────────────────────────────────────────
         $admin = User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@primepower.com',
+            'name' => 'admin user',
+            'email' => 'borja.richard.luyang@gmail.com',
             'password' => Hash::make('password'),
             'role' => UserRole::ADMIN,
             'is_active' => true,
@@ -47,8 +47,8 @@ class CrmSeeder extends Seeder
         ]);
 
         $manager = User::create([
-            'name' => 'Ana Reyes',
-            'email' => 'ana@primepower.com',
+            'name' => 'manager user',
+            'email' => 'rets1nonly@gmail.com',
             'password' => Hash::make('password'),
             'role' => UserRole::MANAGER,
             'is_active' => true,
@@ -56,7 +56,7 @@ class CrmSeeder extends Seeder
         ]);
 
         $salesReps = collect([
-            ['name' => 'Maria Santos', 'email' => 'maria@primepower.com'],
+            ['name' => 'sales representative', 'email' => 'andreisimon2004@gmail.com'],
             ['name' => 'Juan Dela Cruz', 'email' => 'juan@primepower.com'],
             ['name' => 'Carlos Reyes', 'email' => 'carlos@primepower.com'],
             ['name' => 'Anna Lim', 'email' => 'anna@primepower.com'],
