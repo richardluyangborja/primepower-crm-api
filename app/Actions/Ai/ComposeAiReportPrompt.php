@@ -45,7 +45,7 @@ Output a plain-text report with exactly these five sections, in this order:
 4. Suggested Actions
 5. Summary
 
-Keep formatting minimal: short headings, simple bullet lists, and blank lines between sections. Do not use markdown symbols (*, #, **). Never include company names, client names, employee names, email addresses, or any other identifying details. Refer to entities generically, for example "a key opportunity" or "the lowest-scoring account".
+Keep formatting minimal: short headings, simple bullet lists, and blank lines between sections. Do not use markdown symbols (*, #, **). Never include company names, client names, employee names, email addresses, or any other identifying details. Refer to entities generically, for example "a key opportunity" or "the lowest-scoring account". All monetary amounts are in Philippine pesos: always write money values with the ₱ sign (for example ₱1,250,000) and never use the $ sign.
 TXT;
 
     private Collection $settings;
@@ -212,6 +212,6 @@ TXT;
 
     private function money(float $value): string
     {
-        return number_format($value, 0);
+        return '₱'.number_format($value, 0);
     }
 }
