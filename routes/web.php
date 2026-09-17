@@ -35,9 +35,11 @@ Route::post('api/auth/otp/resend', [EmailOtpController::class, 'resend'])->middl
  * API routes (routes/api.php, /api/*) and /sanctum/* take precedence over
  * the fallback, so they always return JSON and never the SPA shell.
  */
-function spaIndexHtmlPath(): string
-{
-    return public_path('index.html');
+if (! function_exists('spaIndexHtmlPath')) {
+    function spaIndexHtmlPath(): string
+    {
+        return public_path('index.html');
+    }
 }
 
 Route::get('/', function () {

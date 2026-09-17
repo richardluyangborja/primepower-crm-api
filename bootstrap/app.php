@@ -14,6 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // HostForge terminates TLS at its proxy/LB and forwards http
+        // internally. Without this Laravel sees every request as http, so
+        // `Secure` session/CSRF cookies are never set and every stateful
+        // POST 419s in production.
+        $middleware->trustProxies(at: '*');
         $middleware->statefulApi();
         $middleware->appendToGroup('web', SessionIdleTimeout::class);
         $middleware->appendToGroup('api', SessionIdleTimeout::class);
