@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\EmailOtpController;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 /**
  * Email OTP two-factor login (password + 6-digit Gmail code).
@@ -17,9 +18,11 @@ use Illuminate\Support\Facades\Route;
  * group. Fortify's password-only POST /api/login is disabled in
  * FortifyServiceProvider so it can never bypass the code step.
  */
-Route::post('api/auth/otp/request', [EmailOtpController::class, 'request'])->middleware('throttle:5,1');
-Route::post('api/auth/otp/verify', [EmailOtpController::class, 'verify'])->middleware('throttle:10,1');
-Route::post('api/auth/otp/resend', [EmailOtpController::class, 'resend'])->middleware('throttle:5,1');
+Route::middleware([EnsureFrontendRequestsAreStateful::class])->group(function () {
+    Route::post('api/auth/otp/request', [EmailOtpController::class, 'request'])->middleware('throttle:5,1');
+    Route::post('api/auth/otp/verify', [EmailOtpController::class, 'verify'])->middleware('throttle:10,1');
+    Route::post('api/auth/otp/resend', [EmailOtpController::class, 'resend'])->middleware('throttle:5,1');
+});
 
 /**
  * Single-artifact deployment: Laravel serves the React frontend build.
